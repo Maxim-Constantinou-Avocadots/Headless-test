@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
+import { getCart } from '../lib/cart-client';
 
 /**
  * Header basket button with a live item count.
  *
- * Rendered client:only because the count comes from the visitor's cart
- * session — server-rendering it would paint a zero that then flickers to the
- * real number on hydration.
+ * Rendered client:only because the visitor's cart session lives in the
+ * browser, not in a cookie the server can read — so the count can only be
+ * resolved here.
  *
  * Other components tell it to refresh by dispatching `cart:changed`, so
  * adding from a product page updates the header without a reload.
@@ -18,9 +19,8 @@ export default function CartButton() {
 
     async function refresh() {
       try {
-        const res = await fetch('/api/cart');
-        const body = await res.json();
-        if (alive) setCount(body?.cart?.count ?? 0);
+        const cart = await getCart();
+        if (alive) setCount(cart.count);
       } catch {
         if (alive) setCount(0);
       }

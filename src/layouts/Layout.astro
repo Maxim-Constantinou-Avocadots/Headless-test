@@ -3,20 +3,31 @@ import '../styles/global.css';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import { SITE } from '../lib/site';
+import { resolvePageUrl, type SeoInput } from '../lib/seo';
 
 interface Props {
+  /** Title, description and social tags for this page. */
+  seo?: SeoInput;
   /** Set on pages that must never be indexed, e.g. the thank-you pages. */
   noindex?: boolean;
   /** Optional JSON-LD, stringified by the caller. */
   jsonLd?: string;
 }
 
-const { noindex = false, jsonLd } = Astro.props;
+const { seo, noindex = false, jsonLd } = Astro.props;
+const pageUrl = resolvePageUrl(Astro.request, Astro.url.href);
 
-// Main pages get their title, description, canonical and social tags injected
-// automatically from the dashboard's SEO settings, so nothing is hard-coded
-// here — a hard-coded tag would compete with the managed one. Item pages fill
-// the `seo-tags` slot below instead.
+// These tags are authored here rather than left to Wix's automatic injection.
+// That injection only emits anything once a Wix user has configured SEO in the
+// dashboard, which on a new site is never — so relying on it ships every page
+// with no <title> at all. Passing defaults through @wix/seo's tag service was
+// tried first and does not work: the service returns only what the dashboard
+// has resolved and ignores supplied fallbacks.
+//
+// Consequence worth knowing: if a Wix user later configures dashboard SEO for
+// a page, its managed tags would be injected alongside these, so remove the
+// page's `seo` prop at that point. See README, "Change page titles".
+const ogType = seo?.type ?? 'website';
 ---
 
 <html lang={SITE.lang}>
@@ -34,7 +45,26 @@ const { noindex = false, jsonLd } = Astro.props;
 
     {noindex && <meta name="robots" content="noindex, nofollow" />}
 
-    <slot name="seo-tags" />
+    {seo && (
+      <>
+        <title>{seo.title}</title>
+        <meta name="description" content={seo.description} />
+        <link rel="canonical" href={pageUrl} />
+
+        <meta property="og:title" content={seo.title} />
+        <meta property="og:description" content={seo.description} />
+        <meta property="og:url" content={pageUrl} />
+        <meta property="og:type" content={ogType} />
+        <meta property="og:site_name" content={SITE.name} />
+        <meta property="og:locale" content={SITE.locale} />
+        {seo.image && <meta property="og:image" content={seo.image} />}
+        {seo.image && <meta property="og:image:alt" content={seo.imageAlt ?? seo.title} />}
+
+        <meta name="twitter:card" content={seo.image ? 'summary_large_image' : 'summary'} />
+        <meta name="twitter:title" content={seo.title} />
+        <meta name="twitter:description" content={seo.description} />
+      </>
+    )}
 
     {jsonLd && <script type="application/ld+json" set:html={jsonLd} is:inline />}
   </head>

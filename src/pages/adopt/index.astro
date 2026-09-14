@@ -48,9 +48,15 @@ function pageHref(n: number): string {
 }
 
 const filtered = isFiltered(filters);
+const seo = {
+  pageName: 'Adopt',
+  title: 'Animals looking for homes | Willowbrook Animal Rescue',
+  description: 'Browse every dog, cat and rabbit currently looking for a home at Willowbrook Animal Rescue, Bristol. Filter by species, size, age and what they can live with.',
+};
+
 ---
 
-<Layout>
+<Layout seo={seo}>
   <section class="page-head">
     <div class="wrap">
       <p class="kicker">Adopt</p>

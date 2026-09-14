@@ -1,5 +1,4 @@
 import type { APIRoute } from 'astro';
-import { auth } from '@wix/essentials';
 import { items } from '@wix/data';
 import { rateLimit, clientKey } from '../../lib/server/rateLimit';
 import { str, isEmail, isHoneypotTripped } from '../../lib/server/validate';
@@ -15,11 +14,36 @@ function json(body: unknown, status = 200) {
 }
 
 /**
+ * Derive a stable item id from the email address.
+ *
+ * This is how duplicates are prevented. The collection is admin-read, so this
+ * route cannot query it to check whether an address is already subscribed —
+ * a visitor-scoped read returns zero rows whether or not the row exists. But
+ * inserting a second item with an id that already exists fails with WDE0074,
+ * so a deterministic id turns "is this a duplicate?" into a write we can
+ * simply attempt. It is hashed rather than using the raw address so that no
+ * email is recoverable from an item id.
+ */
+async function subscriberId(email: string): Promise<string> {
+  const bytes = new TextEncoder().encode(`willowbrook:subscriber:${email}`);
+  const digest = await crypto.subtle.digest('SHA-256', bytes);
+  return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+/** Wix Data reports a duplicate id as WDE0074 / HTTP 409. */
+function isDuplicate(err: unknown): boolean {
+  const e = err as any;
+  const code = e?.details?.applicationError?.code ?? e?.applicationError?.code ?? '';
+  const message = String(e?.message ?? '');
+  return code === 'WDE0074' || message.includes('WDE0074') || message.includes('already exists');
+}
+
+/**
  * Newsletter signup.
  *
- * The Subscribers collection is admin-read and admin-write, so the browser
- * has no access to it at all. This route is the only way in: it validates,
- * rate limits, de-duplicates, and then writes with elevated permissions.
+ * The collection accepts inserts from visitors but is readable only by the
+ * site owner, so subscriber addresses are never exposed. Validation, rate
+ * limiting and the honeypot all run here rather than in the browser.
  */
 export const POST: APIRoute = async ({ request }) => {
   const limit = rateLimit(clientKey(request, 'subscribe'), 5, 60_000);
@@ -46,27 +70,20 @@ export const POST: APIRoute = async ({ request }) => {
   }
 
   try {
-    // Check before inserting so a repeat signup is a friendly message,
-    // not a duplicate row or an error.
-    const findExisting = auth.elevate(
-      async () => items.query(COLLECTION).eq('email', email).limit(1).find(),
-    );
-    const existing = await findExisting();
-    if ((existing.items ?? []).length > 0) {
-      return json({ status: 'duplicate', message: "You're already on the list — thanks again." });
-    }
-
-    const insert = auth.elevate(items.insert);
-    await insert(COLLECTION, {
+    const _id = await subscriberId(email);
+    await items.insert(COLLECTION, {
+      _id,
       email,
       firstName,
       source: 'footer',
       subscribedAt: new Date(),
       status: 'Subscribed',
     });
-
     return json({ status: 'ok', message: "You're on the list. Thank you." });
   } catch (err) {
+    if (isDuplicate(err)) {
+      return json({ status: 'duplicate', message: "You're already on the list — thanks again." });
+    }
     console.error('[api/subscribe] failed', err);
     return json({ status: 'error', message: 'Something went wrong our end. Please try again.' }, 500);
   }

@@ -1,9 +1,15 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import { SITE } from '../lib/site';
+const seo = {
+  pageName: 'Privacy',
+  title: 'Privacy policy | Willowbrook Animal Rescue',
+  description: 'What Willowbrook Animal Rescue collects, why, how long we keep it, and how to ask us to delete it.',
+};
+
 ---
 
-<Layout>
+<Layout seo={seo}>
   <section class="page-head">
     <div class="wrap">
       <p class="kicker">Privacy</p>

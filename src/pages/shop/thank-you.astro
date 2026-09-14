@@ -1,9 +1,15 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import { SITE } from '../../lib/site';
+const seo = {
+  pageName: 'Order received',
+  title: 'Order received | Willowbrook Animal Rescue',
+  description: 'Thank you — your order is confirmed.',
+};
+
 ---
 
-<Layout noindex={true}>
+<Layout seo={seo} noindex={true}>
   <section class="thanks">
     <div class="wrap thanks-inner">
       <p class="thanks-mark" aria-hidden="true">✓</p>

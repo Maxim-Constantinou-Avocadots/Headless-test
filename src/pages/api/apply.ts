@@ -1,5 +1,4 @@
 import type { APIRoute } from 'astro';
-import { auth } from '@wix/essentials';
 import { items } from '@wix/data';
 import { rateLimit, clientKey } from '../../lib/server/rateLimit';
 import { str, num, bool, isEmail, isPhone, isHoneypotTripped, type Errors } from '../../lib/server/validate';
@@ -114,10 +113,8 @@ export const POST: APIRoute = async ({ request }) => {
     // Resolve the animal server-side so the stored name is ours, not the
     // browser's — and so an application cannot be filed against an animal
     // that does not exist.
-    const findAnimal = auth.elevate(
-      async () => items.query(ANIMALS).eq('_id', f.animalId).limit(1).find(),
-    );
-    const animalRes = await findAnimal();
+    // Animals is public-read, so this needs no special permissions.
+    const animalRes = await items.query(ANIMALS).eq('_id', f.animalId).limit(1).find();
     const animal = (animalRes.items ?? [])[0] as Record<string, any> | undefined;
     if (!animal) {
       return json({ status: 'invalid', errors: { animalId: 'That animal is no longer listed.' } }, 400);
@@ -129,8 +126,7 @@ export const POST: APIRoute = async ({ request }) => {
       }, 400);
     }
 
-    const insert = auth.elevate(items.insert);
-    const created = await insert(COLLECTION, {
+    const created = await items.insert(COLLECTION, {
       animalRef: animal._id,
       // Snapshot the name so the record still reads clearly if the animal
       // record is deleted later.

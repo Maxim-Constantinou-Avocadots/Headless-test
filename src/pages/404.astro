@@ -5,9 +5,15 @@ import { SITE } from '../lib/site';
 // Set explicitly so the page still answers 404 when a detail route rewrites
 // here for a missing animal or product, not just on an unmatched URL.
 Astro.response.status = 404;
+const seo = {
+  pageName: 'Page not found',
+  title: 'Page not found | Willowbrook Animal Rescue',
+  description: 'That page could not be found. Browse the animals looking for homes instead.',
+};
+
 ---
 
-<Layout noindex={true}>
+<Layout seo={seo} noindex={true}>
   <section class="notfound">
     <div class="wrap notfound-inner">
       <p class="kicker">Page not found</p>

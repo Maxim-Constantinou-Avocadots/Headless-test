@@ -1,9 +1,15 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import CartView from '../components/CartView.tsx';
+const seo = {
+  pageName: 'Basket',
+  title: 'Your basket | Willowbrook Animal Rescue',
+  description: 'Your basket at the Willowbrook Animal Rescue shop.',
+};
+
 ---
 
-<Layout>
+<Layout seo={seo}>
   <section class="page-head">
     <div class="wrap">
       <p class="kicker">Basket</p>

@@ -1,10 +1,6 @@
 import { productsV3, readOnlyVariantsV3 } from '@wix/stores';
 import { categories } from '@wix/categories';
-import { currentCartV2 } from '@wix/ecom';
 import { imageUrl } from './media';
-
-/** Constant the cart's catalogReference needs. */
-export const STORES_APP_ID = '215238eb-22a5-4c36-9e7b-e7c08025e04e';
 
 /**
  * Requested on every product read. Without CURRENCY there is no
@@ -139,60 +135,5 @@ export async function getCategories(): Promise<Category[]> {
   } catch (err) {
     console.error('[store] category query failed', err);
     return [];
-  }
-}
-
-/* ------------------------------------------------------------------ */
-/* Cart                                                                */
-/* ------------------------------------------------------------------ */
-
-export interface CartLine {
-  _id: string;
-  name: string;
-  quantity: number;
-  price: string;
-  image: string;
-  url: string;
-}
-
-export interface CartView {
-  lines: CartLine[];
-  count: number;
-  subtotal: string;
-}
-
-/** Cart V2 money carries no formatted string — format it here. */
-function formatCartMoney(money: any, cart: any): string {
-  const value = money?.convertedAmount ?? money?.amount;
-  const currency = cart?.customerInfo?.currencyCode ?? cart?.businessInfo?.currencyCode ?? 'GBP';
-  if (value == null) return '';
-  return new Intl.NumberFormat('en-GB', { style: 'currency', currency }).format(Number(value));
-}
-
-export async function getCart(): Promise<CartView> {
-  try {
-    const { cart } = await currentCartV2.getCurrentCart();
-    const lines: CartLine[] = (cart?.lineItems ?? []).map((li: Record<string, any>) => ({
-      _id: li._id,
-      name: li.name?.original ?? 'Item',
-      quantity: li.quantityInfo?.confirmedQuantity ?? li.quantity ?? 0,
-      price: formatCartMoney(li.pricing?.totalPrice ?? li.pricing?.unitPrice, cart),
-      // Resolve here so the browser never receives a wix:image:// value.
-      image: imageUrl(li.attributes?.image ?? '', 200, 200),
-      url: li.url?.relativePath ? `/shop${li.url.relativePath}` : '',
-    }));
-    const count = lines.reduce((n, l) => n + l.quantity, 0);
-
-    let subtotal = '';
-    try {
-      const est = await currentCartV2.estimateCurrentCart();
-      subtotal = formatCartMoney(est?.summary?.priceSummary?.subtotal, cart);
-    } catch {
-      subtotal = '';
-    }
-    return { lines, count, subtotal };
-  } catch {
-    // An empty cart throws on some paths — treat it as empty, not an error.
-    return { lines: [], count: 0, subtotal: '' };
   }
 }

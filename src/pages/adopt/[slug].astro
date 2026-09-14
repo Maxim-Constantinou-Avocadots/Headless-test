@@ -8,6 +8,7 @@ import { formatAge, formatFee, formatDate, toPlain } from '../../lib/format';
 import { imageUrl, galleryUrls } from '../../lib/media';
 import { sanitizeRichText } from '../../lib/sanitize';
 import { SITE } from '../../lib/site';
+import { resolvePageUrl } from '../../lib/seo';
 
 const { slug } = Astro.params;
 
@@ -60,13 +61,21 @@ const isAdopted = animal.status === 'Adopted';
 const canApply = !isAdopted;
 const body = sanitizeRichText(animal.description);
 
-// The Wix item-page SEO service has no CMS item type, so these tags are
-// authored here rather than resolved from the dashboard.
+// Rendered through the same SEO service as every other page, so the tags
+// appear exactly once and stay consistent with the rest of the site.
 const title = `${animal.name} — ${animal.breed}, ${formatAge(animal.age)} | ${SITE.name}`;
 const description = animal.shortDescription
   || toPlain(animal.description, 155)
   || `Meet ${animal.name}, a ${animal.breed} looking for a home at ${SITE.name}.`;
-const canonical = new URL(`/adopt/${animal.slug}`, Astro.site ?? Astro.url.origin).href;
+const canonical = resolvePageUrl(Astro.request, Astro.url.href);
+const seo = {
+  pageName: `Animal: ${animal.name}`,
+  title,
+  description,
+  image: photos[0] || undefined,
+  imageAlt: `${animal.name}, a ${animal.breed}`,
+  type: 'article' as const,
+};
 
 const jsonLd = JSON.stringify({
   '@context': 'https://schema.org',
@@ -79,21 +88,7 @@ const jsonLd = JSON.stringify({
 });
 ---
 
-<Layout jsonLd={jsonLd}>
-  <Fragment slot="seo-tags">
-    <title>{title}</title>
-    <meta name="description" content={description} />
-    <link rel="canonical" href={canonical} />
-    <meta property="og:type" content="article" />
-    <meta property="og:title" content={`${animal.name} — looking for a home`} />
-    <meta property="og:description" content={description} />
-    <meta property="og:url" content={canonical} />
-    <meta property="og:site_name" content={SITE.name} />
-    <meta property="og:locale" content={SITE.locale} />
-    {photos[0] && <meta property="og:image" content={photos[0]} />}
-    {photos[0] && <meta property="og:image:alt" content={`${animal.name}, a ${animal.breed}`} />}
-    <meta name="twitter:card" content={photos[0] ? 'summary_large_image' : 'summary'} />
-  </Fragment>
+<Layout seo={seo} jsonLd={jsonLd}>
 
   <nav class="crumbs wrap" aria-label="Breadcrumb">
     <ol>

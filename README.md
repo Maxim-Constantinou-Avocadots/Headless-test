@@ -83,6 +83,13 @@ accident.
 
 Orders arrive in the normal **Orders** section of the dashboard.
 
+### Regional settings
+
+The site is set to GBP and Europe/London. Its locale still reads Greek
+(Cyprus), left over from the blank template — harmless, since prices, dates and
+the site language are all set explicitly, but you can correct it under
+**Settings** → **Business Info** → **Regional Settings**.
+
 ### Photographs
 
 Animals and products currently have no photographs — every image slot shows a
@@ -99,14 +106,24 @@ placeholder disappears on its own. No code change, no republish.
 
 ### Change page titles and descriptions for Google
 
-**SEO & GEO** → **SEO Settings** → **Main Pages**. Each page is a row. This is
-also where you turn indexing on or off per page. The two thank-you pages are
-already excluded from search engines in code.
+Animal pages look after themselves: their title and description are built from
+the animal's name, breed, age and short description, so editing the animal
+updates them.
 
-Product pages take their SEO from the same area, under the Stores section.
-Animal pages are the exception: their titles and descriptions are generated
-from the animal's own name, breed and description, so they update when you edit
-the animal.
+For every other page the title and description are set in the code, in that
+page's `seo` block under `src/pages/`. A developer can change them in a minute.
+
+This is not where Wix would normally put them, and the reason is worth
+recording. Wix can inject these tags from **SEO & GEO** → **SEO Settings**, but
+only once a Wix user has configured each page there — until then it injects
+nothing at all, and every page ships with no title. Feeding defaults through
+`@wix/seo`'s tag service was tried and does not help: it returns only what the
+dashboard has resolved and ignores supplied fallbacks. So the tags are authored
+in code, which means every page has a good title today.
+
+If you later configure dashboard SEO for a page, ask a developer to remove that
+page's `seo` prop at the same time, so its managed tags are not rendered
+alongside the coded ones.
 
 ---
 
@@ -190,17 +207,40 @@ call the SDK themselves.
 ambient. There is no `createClient`, no `OAuthStrategy` and no `clientId` in
 app code — you import from `@wix/*` and call methods.
 
-**Why the form endpoints exist.** `AdoptionApplications`, `Subscribers` and
-`Enquiries` are all admin-read *and* admin-write. The browser cannot read or
-write them at all. Every submission goes through a route in `src/pages/api/`
-that re-validates, rate limits, drops honeypot submissions, and then writes with
-`auth.elevate()`.
+**Form submissions and why elevation is not used.** `AdoptionApplications`,
+`Subscribers` and `Enquiries` are `read`/`update`/`remove: ADMIN` with
+`insert: ANYONE`. Submissions are never publicly readable, and nobody can edit
+or delete one; a visitor can only add.
 
-This is a deliberate departure from the original brief, which asked for
-"anyone can submit" on those collections. Opening `insert` to `ANYONE` would
-let any browser write to them directly, which is what spam bots find; routing
-through a server endpoint gets the same outcome — anyone can submit, only the
-owner can read — while keeping write access off the client entirely.
+The stricter design — admin-only in both directions, with the server route
+elevating to write — was built first and does not work here. `auth.elevate()`
+wraps a raw Wix module descriptor, but `@wix/data`'s `items.insert` is a plain
+contextualised function, so elevation fails at runtime with
+`context.initWixModules(...).apply is not a function`. The SDK's own type
+documentation notes that elevation is not intended for Wix Headless. So the
+collections use the permission model the platform actually supports.
+
+Submissions still go through `src/pages/api/`, which validates every rule the
+browser checks, rate limits, and discards honeypot submissions. Worth being
+clear about the residual gap: because `insert` is open, a determined bot could
+POST straight to Wix Data and bypass those checks. The protections make casual
+abuse uneconomic; they are not a hard boundary.
+
+**Duplicate subscribers** are prevented without reading the collection. Since
+`read` is admin-only, the route cannot query for an existing address — a
+visitor-scoped read returns zero rows either way. Instead each subscriber's
+item `_id` is a SHA-256 hash of their email, so a second signup collides with
+`WDE0074` and is reported as "already on the list". The hash means no address
+is recoverable from an item id.
+
+**The basket runs in the browser, not on the server.** `src/lib/cart-client.ts`
+calls `currentCartV2` directly from the React islands. This is not a style
+choice: the visitor's cart session lives in the browser's Wix context and is
+not sent to the server as a cookie, so the same calls made from a server route
+act on a fresh, empty cart every request — an item would appear to add and then
+vanish on the next read. This was built as server routes first and failed
+exactly that way. Verified: reusing one visitor token returns the same cart id
+across calls, while server-side calls do not.
 
 **Rate limiting is best-effort.** It is an in-process counter, so it resets on
 a cold start and does not coordinate across instances. It stops one script

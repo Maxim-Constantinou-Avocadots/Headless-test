@@ -1,8 +1,5 @@
 ---
 import { WIX_APPS } from '@wix/essentials';
-import { SEO } from '@wix/seo/components';
-import { loadSEOTagsServiceConfig } from '@wix/seo/services';
-import { seoTags } from '@wix/seo';
 
 import Layout from '../../layouts/Layout.astro';
 import Placeholder from '../../components/Placeholder.astro';
@@ -24,33 +21,11 @@ export const wixMetadata = {
 
 const { slug } = Astro.params;
 
-// Behind Wix's TLS-terminating proxy Astro.url can carry the internal http
-// scheme, so prefer the forwarded URL when it is present and absolute.
-const forwardedUrl = Astro.request.headers.get('x-wix-forwarded-url');
-const pageUrl =
-  forwardedUrl && URL.canParse(forwardedUrl) && /^https?:$/.test(new URL(forwardedUrl).protocol)
-    ? forwardedUrl
-    : Astro.url.href;
-
 let product: Product | null = null;
 let variants: Variant[] = [];
-let seoConfig: Awaited<ReturnType<typeof loadSEOTagsServiceConfig>> | null = null;
 
 try {
-  // Fetch the item and its SEO tags together rather than in series.
-  const [p, cfg] = await Promise.all([
-    slug ? getProductBySlug(slug) : Promise.resolve(null),
-    loadSEOTagsServiceConfig({
-      pageUrl,
-      itemType: seoTags.ItemType.STORES_PRODUCT,
-      itemData: { slug: slug! },
-    }).catch((err) => {
-      console.error('[product] SEO tags failed', err);
-      return null;
-    }),
-  ]);
-  product = p;
-  seoConfig = cfg;
+  product = slug ? await getProductBySlug(slug) : null;
 } catch (err) {
   console.error('[product] load failed', err);
 }
@@ -63,6 +38,15 @@ try {
 } catch (err) {
   console.error('[product] variants failed', err);
 }
+
+const seo = {
+  pageName: `Product: ${product.name}`,
+  title: `${product.name} | ${SITE.name} shop`,
+  description: product.description
+    || `${product.name} from the Willowbrook Animal Rescue shop. Every sale funds food, bedding and veterinary care.`,
+  image: product.image || undefined,
+  imageAlt: product.name,
+};
 
 const jsonLd = JSON.stringify({
   '@context': 'https://schema.org',
@@ -81,8 +65,7 @@ const jsonLd = JSON.stringify({
 });
 ---
 
-<Layout jsonLd={jsonLd}>
-  {seoConfig && <SEO.Tags seoTagsServiceConfig={seoConfig} slot="seo-tags" />}
+<Layout seo={seo} jsonLd={jsonLd}>
 
   <nav class="crumbs wrap" aria-label="Breadcrumb">
     <ol>

@@ -16,9 +16,15 @@ try {
 } catch (err) {
   console.error('[apply] could not load animals', err);
 }
+const seo = {
+  pageName: 'Apply',
+  title: 'Apply to adopt | Willowbrook Animal Rescue',
+  description: 'The adoption application for Willowbrook Animal Rescue. About ten minutes, and a real person reads every one.',
+};
+
 ---
 
-<Layout>
+<Layout seo={seo}>
   <section class="page-head">
     <div class="wrap">
       <p class="kicker">Adoption application</p>

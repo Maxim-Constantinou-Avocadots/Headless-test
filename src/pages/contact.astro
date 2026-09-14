@@ -11,9 +11,15 @@ const fullAddress = `${address.line1}, ${address.locality}, ${address.postcode}`
 const bbox = [geo.lng - 0.012, geo.lat - 0.008, geo.lng + 0.012, geo.lat + 0.008].join('%2C');
 const mapSrc = `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${geo.lat}%2C${geo.lng}`;
 const mapLink = `https://www.openstreetmap.org/?mlat=${geo.lat}&mlon=${geo.lng}#map=16/${geo.lat}/${geo.lng}`;
+const seo = {
+  pageName: 'Contact',
+  title: 'Contact and opening hours | Willowbrook Animal Rescue',
+  description: 'Visit Willowbrook Animal Rescue in Bristol. Address, opening hours, phone, email and a short enquiry form.',
+};
+
 ---
 
-<Layout>
+<Layout seo={seo}>
   <section class="page-head">
     <div class="wrap">
       <p class="kicker">Contact</p>

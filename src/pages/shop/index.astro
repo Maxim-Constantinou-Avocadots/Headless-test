@@ -29,9 +29,15 @@ try {
   console.error('[shop] products failed', err);
   failed = true;
 }
+const seo = {
+  pageName: 'Shop',
+  title: 'Shop | Willowbrook Animal Rescue',
+  description: 'T-shirts, hoodies, totes, pins and mugs that fund food, bedding and veterinary care at Willowbrook Animal Rescue in Bristol.',
+};
+
 ---
 
-<Layout>
+<Layout seo={seo}>
   <section class="page-head">
     <div class="wrap">
       <p class="kicker">The shop</p>

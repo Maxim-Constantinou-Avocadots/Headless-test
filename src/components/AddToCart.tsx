@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import type { Variant } from '../lib/store';
+import { addToCart, announceCartChange } from '../lib/cart-client';
 
 interface Props {
   productId: string;
@@ -63,32 +64,18 @@ export default function AddToCart({ productId, productName, variants, inStock }:
     setMessage('');
 
     try {
-      const res = await fetch('/api/cart', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'add',
-          productId,
-          variantId: matched?.variantId ?? '',
-          quantity,
-        }),
-      });
-      const body = await res.json().catch(() => ({}));
-
-      if (body.status === 'ok') {
-        setStatus('added');
-        setMessage(`${productName} added to your basket.`);
-        // Let the header badge update without a reload.
-        window.dispatchEvent(new CustomEvent('cart:changed', {
-          detail: { count: body.cart?.count },
-        }));
-      } else {
-        setStatus('error');
-        setMessage(body.message ?? 'Could not add that to your basket.');
-      }
-    } catch {
+      const cart = await addToCart(productId, matched?.variantId ?? '', quantity);
+      setStatus('added');
+      setMessage(`${productName} added to your basket.`);
+      // Update the header badge without a reload.
+      announceCartChange(cart.count);
+    } catch (err: any) {
       setStatus('error');
-      setMessage('We could not reach the server. Please try again.');
+      setMessage(
+        /inventory|stock/i.test(String(err?.message ?? ''))
+          ? 'Sorry — there is not enough stock left for that.'
+          : 'Could not add that to your basket. Please try again.',
+      );
     }
   }
 

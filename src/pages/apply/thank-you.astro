@@ -3,9 +3,15 @@ import Layout from '../../layouts/Layout.astro';
 import { SITE } from '../../lib/site';
 
 const animal = Astro.url.searchParams.get('animal') ?? '';
+const seo = {
+  pageName: 'Application received',
+  title: 'Application received | Willowbrook Animal Rescue',
+  description: 'Thank you — we have your adoption application and will be in touch shortly.',
+};
+
 ---
 
-<Layout noindex={true}>
+<Layout seo={seo} noindex={true}>
   <section class="thanks">
     <div class="wrap thanks-inner">
       <p class="thanks-mark" aria-hidden="true">✓</p>

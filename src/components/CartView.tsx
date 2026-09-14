@@ -1,11 +1,15 @@
 import { useEffect, useState } from 'react';
-import type { CartView as Cart } from '../lib/store';
+import {
+  getCart, setQuantity, removeLine, startCheckout, announceCartChange,
+  type CartView as Cart,
+} from '../lib/cart-client';
 
 /**
  * Basket contents with quantity controls and the handoff to Wix checkout.
  *
- * Rendered client-side because the basket belongs to the visitor's session —
- * server-rendering it would show a stale or empty basket on a cached response.
+ * All basket operations run here in the browser. The visitor's cart session
+ * lives in the browser's Wix context rather than in a cookie, so the same
+ * calls made from a server route would act on a fresh, empty cart.
  */
 export default function CartView() {
   const [cart, setCart] = useState<Cart | null>(null);
@@ -17,33 +21,28 @@ export default function CartView() {
 
   async function load() {
     try {
-      const res = await fetch('/api/cart');
-      const body = await res.json();
-      setCart(body.cart ?? { lines: [], count: 0, subtotal: '' });
+      setCart(await getCart());
     } catch {
       setError('We could not load your basket. Please refresh.');
       setCart({ lines: [], count: 0, subtotal: '' });
     }
   }
 
-  async function mutate(action: string, lineItemId: string, quantity?: number) {
+  async function mutate(action: 'update' | 'remove', lineItemId: string, quantity?: number) {
     setBusy(lineItemId);
     setError('');
     try {
-      const res = await fetch('/api/cart', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action, lineItemId, quantity }),
-      });
-      const body = await res.json();
-      if (body.status === 'ok') {
-        setCart(body.cart);
-        window.dispatchEvent(new CustomEvent('cart:changed', { detail: { count: body.cart?.count } }));
-      } else {
-        setError(body.message ?? 'Could not update your basket.');
-      }
-    } catch {
-      setError('We could not reach the server. Please try again.');
+      const next = action === 'remove'
+        ? await removeLine(lineItemId)
+        : await setQuantity(lineItemId, quantity ?? 0);
+      setCart(next);
+      announceCartChange(next.count);
+    } catch (err: any) {
+      setError(
+        /inventory|stock/i.test(String(err?.message ?? ''))
+          ? 'Sorry — there is not enough stock left for that.'
+          : 'Could not update your basket. Please try again.',
+      );
     } finally {
       setBusy('');
     }
@@ -53,23 +52,10 @@ export default function CartView() {
     setCheckingOut(true);
     setError('');
     try {
-      const res = await fetch('/api/checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        // The origin must come from the browser: read off the request it
-        // resolves to http:// behind the proxy, which the redirect allowlist
-        // rejects when the shopper returns.
-        body: JSON.stringify({ origin: window.location.origin }),
-      });
-      const body = await res.json();
-      if (body.status === 'ok' && body.url) {
-        window.location.href = body.url;
-        return;
-      }
-      setError(body.message ?? 'Could not start checkout.');
-    } catch {
-      setError('We could not reach the server. Please try again.');
-    } finally {
+      window.location.href = await startCheckout();
+      return;
+    } catch (err: any) {
+      setError(String(err?.message ?? '') || 'Could not start checkout. Please try again.');
       setCheckingOut(false);
     }
   }

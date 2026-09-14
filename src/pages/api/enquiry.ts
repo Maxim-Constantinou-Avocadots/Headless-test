@@ -1,5 +1,4 @@
 import type { APIRoute } from 'astro';
-import { auth } from '@wix/essentials';
 import { items } from '@wix/data';
 import { rateLimit, clientKey } from '../../lib/server/rateLimit';
 import { str, isEmail, isHoneypotTripped, type Errors } from '../../lib/server/validate';
@@ -44,8 +43,7 @@ export const POST: APIRoute = async ({ request }) => {
   if (Object.keys(errors).length) return json({ status: 'invalid', errors }, 400);
 
   try {
-    const insert = auth.elevate(items.insert);
-    await insert(COLLECTION, {
+    await items.insert(COLLECTION, {
       name, email,
       subject: subject || 'General enquiry',
       message,

@@ -41,9 +41,15 @@ const jsonLd = JSON.stringify({
     addressCountry: SITE.address.countryCode,
   },
 });
+const seo = {
+  pageName: 'Home',
+  title: 'Willowbrook Animal Rescue — rehoming dogs, cats and rabbits in Bristol',
+  description: 'Meet the dogs, cats and rabbits looking for homes at Willowbrook Animal Rescue in Bristol. Browse who is available, read their full story, and apply to adopt.',
+};
+
 ---
 
-<Layout jsonLd={jsonLd}>
+<Layout seo={seo} jsonLd={jsonLd}>
   <section class="hero">
     <div class="wrap hero-inner">
       <div class="hero-copy">
