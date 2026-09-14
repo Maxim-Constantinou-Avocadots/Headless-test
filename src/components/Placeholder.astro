@@ -1,0 +1,77 @@
+---
+import { placeholderTone } from '../lib/format';
+
+interface Props {
+  /** Drives the colour, so the same subject always gets the same block. */
+  seed: string;
+  /** Shown inside the block. */
+  label?: string;
+  /** 'dog' | 'cat' | 'rabbit' | 'product' — picks the glyph. */
+  kind?: string;
+  ratio?: string;
+  class?: string;
+}
+
+const { seed, label = '', kind = '', ratio = '4 / 3', class: cls = '' } = Astro.props;
+const tone = placeholderTone(seed);
+const k = kind.toLowerCase();
+---
+
+{/*
+  Themed-block fallback, used wherever there is no photograph yet. It follows
+  the site's own tokens so an imageless card still looks deliberate, and it
+  disappears on its own the moment the shelter uploads a real photo.
+*/}
+<div
+  class:list={['ph', cls]}
+  style={`--ph-from:${tone.from};--ph-to:${tone.to};--ph-ink:${tone.ink};aspect-ratio:${ratio};`}
+  role="img"
+  aria-label={label ? `${label} — photograph coming soon` : 'Photograph coming soon'}
+>
+  <svg viewBox="0 0 48 48" width="46" height="46" fill="none" aria-hidden="true">
+    {k === 'cat' && (
+      <>
+        <path d="M12 20 10 9l8 5.5a18 18 0 0 1 12 0L38 9l-2 11" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/>
+        <path d="M10 25a14 14 0 0 0 28 0" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
+        <circle cx="19" cy="24" r="1.9" fill="currentColor"/><circle cx="29" cy="24" r="1.9" fill="currentColor"/>
+      </>
+    )}
+    {k === 'rabbit' && (
+      <>
+        <ellipse cx="18" cy="14" rx="3.4" ry="9" stroke="currentColor" stroke-width="2.4"/>
+        <ellipse cx="29" cy="15" rx="3.4" ry="8" stroke="currentColor" stroke-width="2.4"/>
+        <circle cx="24" cy="32" r="9" stroke="currentColor" stroke-width="2.4"/>
+        <circle cx="21" cy="31" r="1.7" fill="currentColor"/><circle cx="27" cy="31" r="1.7" fill="currentColor"/>
+      </>
+    )}
+    {(k === 'dog' || k === '') && (
+      <>
+        <path d="M14 30c0-5 4.5-8.5 10-8.5S34 25 34 30s-4.5 8-10 8-10-3-10-8Z" stroke="currentColor" stroke-width="2.4"/>
+        <circle cx="12" cy="18" r="4.2" stroke="currentColor" stroke-width="2.4"/>
+        <circle cx="36" cy="18" r="4.2" stroke="currentColor" stroke-width="2.4"/>
+        <circle cx="20" cy="12" r="3.8" stroke="currentColor" stroke-width="2.4"/>
+        <circle cx="29" cy="12" r="3.8" stroke="currentColor" stroke-width="2.4"/>
+      </>
+    )}
+    {k === 'product' && (
+      <>
+        <path d="M11 16h26l-2 21a3 3 0 0 1-3 2.7H16a3 3 0 0 1-3-2.7L11 16Z" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/>
+        <path d="M19 16a5 5 0 0 1 10 0" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
+      </>
+    )}
+  </svg>
+  {label && <span class="ph-label">{label}</span>}
+</div>
+
+<style>
+  .ph {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: .5rem; width: 100%;
+    background: linear-gradient(140deg, var(--ph-from), var(--ph-to));
+    color: var(--ph-ink);
+  }
+  .ph-label {
+    font-family: var(--font-head); font-weight: 600; font-size: var(--step--1);
+    opacity: .85; padding-inline: 1rem; text-align: center;
+  }
+</style>

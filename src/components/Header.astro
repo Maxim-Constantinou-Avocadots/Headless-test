@@ -1,0 +1,144 @@
+---
+import { SITE, NAV } from '../lib/site';
+import CartButton from './CartButton.tsx';
+
+const path = Astro.url.pathname;
+const isCurrent = (href: string) =>
+  href === '/' ? path === '/' : path === href || path.startsWith(href + '/');
+---
+
+<header class="site-header">
+  <div class="wrap header-inner">
+    <a class="brand" href="/">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 32 32" width="32" height="32" fill="none">
+          <circle cx="16" cy="16" r="15" fill="var(--teal)" />
+          <path d="M11 19.5c0-2.6 2.2-4.5 5-4.5s5 1.9 5 4.5S18.8 24 16 24s-5-1.9-5-4.5Z" fill="#fff"/>
+          <circle cx="10.5" cy="12" r="2.3" fill="#fff"/>
+          <circle cx="21.5" cy="12" r="2.3" fill="#fff"/>
+          <circle cx="14.8" cy="9" r="2.1" fill="#fff"/>
+          <circle cx="19.5" cy="9" r="2.1" fill="#fff"/>
+        </svg>
+      </span>
+      <span class="brand-text">
+        <strong>{SITE.shortName}</strong>
+        <small>Animal Rescue</small>
+      </span>
+    </a>
+
+    <button
+      type="button"
+      class="nav-burger"
+      id="nav-burger"
+      aria-expanded="false"
+      aria-controls="site-nav"
+    >
+      <span class="visually-hidden">Menu</span>
+      <span class="bar" aria-hidden="true"></span>
+      <span class="bar" aria-hidden="true"></span>
+      <span class="bar" aria-hidden="true"></span>
+    </button>
+
+    <nav class="site-nav" id="site-nav" aria-label="Main">
+      <ul>
+        {NAV.map((item) => (
+          <li>
+            <a href={item.href} aria-current={isCurrent(item.href) ? 'page' : undefined}>
+              {item.label}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+
+    <div class="header-actions">
+      <CartButton client:only="react" />
+      <a class="btn btn--primary btn--sm header-cta" href="/adopt">Meet the animals</a>
+    </div>
+  </div>
+</header>
+
+<style>
+  .site-header {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(250, 246, 239, .92);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border);
+  }
+  .header-inner {
+    display: flex; align-items: center; gap: 1rem;
+    min-height: 72px; flex-wrap: wrap;
+  }
+  .brand { display: flex; align-items: center; gap: .6rem; text-decoration: none; color: var(--ink); margin-right: auto; }
+  .brand-mark { display: block; flex: none; }
+  .brand-text { display: flex; flex-direction: column; line-height: 1.1; }
+  .brand-text strong { font-family: var(--font-head); font-size: 1.15rem; font-weight: 700; letter-spacing: -.02em; }
+  .brand-text small { font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-soft); }
+
+  .site-nav ul { display: flex; gap: .25rem; list-style: none; margin: 0; padding: 0; }
+  .site-nav a {
+    display: block; padding: .5rem .85rem; border-radius: 999px;
+    font-family: var(--font-head); font-weight: 600; font-size: var(--step--1);
+    color: var(--ink); text-decoration: none;
+  }
+  .site-nav a:hover { background: var(--teal-tint); color: var(--teal-dark); }
+  .site-nav a[aria-current="page"] { background: var(--teal); color: #fff; }
+
+  .header-actions { display: flex; align-items: center; gap: .6rem; }
+
+  .nav-burger { display: none; }
+
+  @media (max-width: 860px) {
+    .header-cta { display: none; }
+
+    /* The toggle only appears when JS can drive it. Without JS the nav simply
+       stays open, so the site is fully navigable either way. */
+    :global(html.js) .nav-burger {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 5px; width: 44px; height: 44px; padding: 10px; cursor: pointer;
+      background: transparent; border: 1px solid var(--border-strong);
+      border-radius: var(--radius); order: 3;
+    }
+    .nav-burger .bar { display: block; width: 100%; height: 2px; background: var(--ink); border-radius: 2px; }
+
+    .site-nav { order: 4; flex-basis: 100%; padding-bottom: .75rem; }
+    :global(html.js) .site-nav[data-open='false'] { display: none; }
+    .site-nav ul { flex-direction: column; gap: .15rem; }
+    .site-nav a { padding: .7rem .9rem; }
+  }
+</style>
+
+<script>
+  const burger = document.getElementById('nav-burger');
+  const nav = document.getElementById('site-nav');
+
+  if (burger && nav) {
+    const mobile = window.matchMedia('(max-width: 860px)');
+
+    const setOpen = (open: boolean) => {
+      nav.setAttribute('data-open', String(open));
+      burger.setAttribute('aria-expanded', String(open));
+    };
+
+    // Collapsed by default on small screens, always open on large ones.
+    const sync = () => setOpen(!mobile.matches);
+    sync();
+    mobile.addEventListener('change', sync);
+
+    burger.addEventListener('click', () => {
+      setOpen(burger.getAttribute('aria-expanded') !== 'true');
+    });
+
+    // Close after following a link, so the menu does not cover the new page.
+    nav.addEventListener('click', (e) => {
+      if (mobile.matches && (e.target as HTMLElement).closest('a')) setOpen(false);
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && mobile.matches && burger.getAttribute('aria-expanded') === 'true') {
+        setOpen(false);
+        burger.focus();
+      }
+    });
+  }
+</script>

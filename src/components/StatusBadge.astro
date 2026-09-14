@@ -1,0 +1,6 @@
+---
+import { statusClass } from '../lib/format';
+interface Props { status: string }
+const { status } = Astro.props;
+---
+<span class={statusClass(status)}>{status}</span>

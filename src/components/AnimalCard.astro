@@ -1,0 +1,62 @@
+---
+import Placeholder from './Placeholder.astro';
+import StatusBadge from './StatusBadge.astro';
+import { formatAge } from '../lib/format';
+import { imageUrl } from '../lib/media';
+import type { Animal } from '../lib/animals';
+
+interface Props { animal: Animal; eager?: boolean }
+const { animal, eager = false } = Astro.props;
+
+const src = imageUrl(animal.mainImage, 640, 480);
+const href = `/adopt/${animal.slug}`;
+---
+
+<article class="card animal-card">
+  <a class="animal-card-media" href={href} tabindex="-1" aria-hidden="true">
+    {src
+      ? <img src={src} alt="" width="640" height="480" loading={eager ? 'eager' : 'lazy'} decoding="async" />
+      : <Placeholder seed={animal.slug} kind={animal.species} label={animal.name} ratio="4 / 3" />}
+  </a>
+
+  <div class="animal-card-body">
+    <div class="animal-card-top">
+      <h3 class="animal-card-name">
+        <a href={href}>{animal.name}</a>
+      </h3>
+      <StatusBadge status={animal.status} />
+    </div>
+
+    <p class="animal-card-meta">
+      {[animal.breed, formatAge(animal.age), animal.sex].filter(Boolean).join(' · ')}
+    </p>
+
+    <p class="animal-card-desc">{animal.shortDescription}</p>
+
+    {animal.specialNeeds && (
+      <p class="animal-card-flag">
+        <span aria-hidden="true">♥</span> Needs a little extra care
+      </p>
+    )}
+  </div>
+</article>
+
+<style>
+  .animal-card-media { display: block; background: var(--cream-deep); }
+  .animal-card-media img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; }
+  .animal-card-body { padding: 1.1rem 1.15rem 1.3rem; display: flex; flex-direction: column; gap: .45rem; flex: 1; }
+  .animal-card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: .75rem; }
+  .animal-card-name { font-size: var(--step-1); margin: 0; }
+  .animal-card-name a { color: var(--ink); text-decoration: none; }
+  /* Stretch the title link over the whole card so the entire card is clickable,
+     while keeping exactly one link in the tab order. */
+  .animal-card-name a::after { content: ''; position: absolute; inset: 0; }
+  .animal-card { position: relative; }
+  .animal-card-name a:hover { color: var(--teal); }
+  .animal-card-meta { font-size: var(--step--1); color: var(--ink-soft); margin: 0; }
+  .animal-card-desc { margin: 0; font-size: var(--step-0); }
+  .animal-card-flag {
+    margin: auto 0 0; font-size: var(--step--1); font-weight: 600; color: var(--terracotta);
+    display: flex; align-items: center; gap: .35rem;
+  }
+</style>
