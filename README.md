@@ -83,12 +83,63 @@ accident.
 
 Orders arrive in the normal **Orders** section of the dashboard.
 
+### If you connect a custom domain, re-register it
+
+Checkout redirects through the domain registered on the site's OAuth app, and
+that registration does **not** update itself when the published domain changes
+— `wix release` is documented to handle it and does not. When it is wrong,
+clicking checkout fails with:
+
+```
+{"message":"Failed to extract metaSiteId",
+ "details":{"applicationError":{"code":"FAILED_TO_FETCH_METASITE_ID_BY_DOMAIN"}}}
+```
+
+This happened once already: the app was still registered against the domain
+from when the project was first provisioned, so checkout redirected to a dead
+host. It is fixed for the current domain. If you later connect a custom
+domain, a developer needs to patch the OAuth app again — add the new domain to
+`allowedDomains`, `allowedRedirectDomains` and `allowedRedirectUris`, and set
+`redirectUrlWixPages` to it:
+
+```bash
+SITE_ID=7485a5cf-ddfa-4799-9587-be1611c35917
+CLIENT_ID=edf3f8da-beb5-43f8-bd1e-18bf0df02742
+TOKEN=$(npx @wix/cli@latest token --site "$SITE_ID")
+
+# GET first — PATCH replaces each array wholesale, so include what is there.
+curl -sS "https://www.wixapis.com/oauth-app/v1/oauth-apps/$CLIENT_ID" \
+  -H "Authorization: Bearer $TOKEN"
+
+curl -sS -X PATCH "https://www.wixapis.com/oauth-app/v1/oauth-apps/$CLIENT_ID" \
+  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' -d '{
+    "oAuthApp": {
+      "id": "'"$CLIENT_ID"'",
+      "allowedDomains": ["https://YOUR-DOMAIN", "..."],
+      "allowedRedirectDomains": ["https://YOUR-DOMAIN", "..."],
+      "allowedRedirectUris": ["https://YOUR-DOMAIN/api/auth/callback", "..."],
+      "redirectUrlWixPages": "https://YOUR-DOMAIN"
+    },
+    "mask": { "paths": ["allowedDomains","allowedRedirectDomains",
+                        "allowedRedirectUris","redirectUrlWixPages"] }
+  }'
+```
+
+The field mask is required — without it the PATCH returns 200 and silently
+does nothing.
+
 ### Regional settings
 
-The site is set to GBP and Europe/London. Its locale still reads Greek
-(Cyprus), left over from the blank template — harmless, since prices, dates and
-the site language are all set explicitly, but you can correct it under
-**Settings** → **Business Info** → **Regional Settings**.
+The site is set to GBP and Europe/London, and the business name is
+Willowbrook Animal Rescue. Two leftovers from the blank template you may want
+to tidy in the dashboard:
+
+- The **locale** still reads Greek (Cyprus). Harmless — prices, dates and the
+  site language are all set explicitly in code — but you can correct it under
+  **Settings** → **Business Info** → **Regional Settings**.
+- The **site name** is still "Paw Haven", which is what the hosted checkout
+  page puts in its browser-tab title. Rename the site in the dashboard to
+  change it; it is separate from the business name.
 
 ### Photographs
 
