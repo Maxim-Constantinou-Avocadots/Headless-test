@@ -1,0 +1,46 @@
+---
+import Placeholder from './Placeholder.astro';
+import type { Product } from '../lib/store';
+
+interface Props { product: Product; eager?: boolean }
+const { product, eager = false } = Astro.props;
+const href = `/shop/${product.slug}`;
+---
+
+<article class="card product-card">
+  <a class="product-card-media" href={href} tabindex="-1" aria-hidden="true">
+    {product.image
+      ? <img src={product.image} alt="" width="600" height="600" loading={eager ? 'eager' : 'lazy'} decoding="async" />
+      : <Placeholder seed={product.slug} kind="product" label={product.name} ratio="1 / 1" />}
+    {!product.inStock && <span class="product-oos">Out of stock</span>}
+  </a>
+
+  <div class="product-card-body">
+    <h3 class="product-card-name"><a href={href}>{product.name}</a></h3>
+    <p class="product-card-price">
+      {product.price}
+      {product.compareAt && <span class="product-card-was">{product.compareAt}</span>}
+    </p>
+  </div>
+</article>
+
+<style>
+  .product-card { position: relative; }
+  .product-card-media { display: block; position: relative; background: var(--cream-deep); }
+  .product-card-media img { width: 100%; aspect-ratio: 1 / 1; object-fit: cover; }
+  .product-oos {
+    position: absolute; left: .75rem; top: .75rem;
+    background: var(--neutral-tint); color: var(--neutral);
+    font-family: var(--font-head); font-weight: 600; font-size: var(--step--1);
+    padding: .25rem .65rem; border-radius: 999px;
+  }
+  .product-card-body { padding: .9rem 1rem 1.15rem; display: flex; flex-direction: column; gap: .3rem; }
+  .product-card-name { font-size: var(--step-0); margin: 0; }
+  .product-card-name a { color: var(--ink); text-decoration: none; }
+  .product-card-name a::after { content: ''; position: absolute; inset: 0; }
+  .product-card-name a:hover { color: var(--teal); }
+  .product-card-price { margin: 0; font-family: var(--font-head); font-weight: 600; color: var(--teal); }
+  .product-card-was {
+    margin-left: .5rem; text-decoration: line-through; color: var(--ink-soft); font-weight: 400;
+  }
+</style>

@@ -1,0 +1,43 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { SITE } from '../../lib/site';
+---
+
+<Layout noindex={true}>
+  <section class="thanks">
+    <div class="wrap thanks-inner">
+      <p class="thanks-mark" aria-hidden="true">✓</p>
+      <h1>Order received — thank you.</h1>
+      <p class="lede">
+        Your confirmation email is on its way. Every penny of this goes into
+        food, bedding and veterinary care.
+      </p>
+
+      <ul class="order-next">
+        <li>We pack orders on Tuesdays and Fridays.</li>
+        <li>Postage is second class within the UK, usually three working days.</li>
+        <li>
+          Anything wrong with your order? Email
+          <a href={`mailto:${SITE.email}`}>{SITE.email}</a> and we will sort it.
+        </li>
+      </ul>
+
+      <div class="thanks-actions">
+        <a class="btn btn--ghost" href="/shop">Back to the shop</a>
+        <a class="btn btn--secondary" href="/adopt">Meet the animals</a>
+      </div>
+    </div>
+  </section>
+</Layout>
+
+<style>
+  .thanks { padding-block: clamp(2.5rem, 2rem + 3vw, 5rem); }
+  .thanks-inner { max-width: 680px; }
+  .thanks-mark {
+    width: 56px; height: 56px; display: grid; place-items: center;
+    background: var(--ok-tint); color: var(--ok); border-radius: 50%;
+    font-size: 1.6rem; font-weight: 700; margin: 0 0 1.25rem;
+  }
+  .order-next { margin: 1.75rem 0; padding-left: 1.2rem; display: grid; gap: .5rem; }
+  .thanks-actions { display: flex; gap: .75rem; flex-wrap: wrap; margin-top: 2rem; }
+</style>

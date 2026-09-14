@@ -1,0 +1,110 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import ProductCard from '../../components/ProductCard.astro';
+import { getProducts, getProductsByCategory, getCategories } from '../../lib/store';
+import type { Product, Category } from '../../lib/store';
+
+const activeSlug = Astro.url.searchParams.get('category') ?? '';
+
+let categories: Category[] = [];
+try {
+  categories = await getCategories();
+} catch (err) {
+  console.error('[shop] categories failed', err);
+}
+
+const active = categories.find((c) => c.slug === activeSlug) ?? null;
+
+let products: Product[] = [];
+let failed = false;
+try {
+  if (active) {
+    products = await getProductsByCategory(active._id);
+  } else {
+    const res = await getProducts();
+    products = res.products;
+    failed = res.failed;
+  }
+} catch (err) {
+  console.error('[shop] products failed', err);
+  failed = true;
+}
+---
+
+<Layout>
+  <section class="page-head">
+    <div class="wrap">
+      <p class="kicker">The shop</p>
+      <h1>Merch that pays for food and vet bills</h1>
+      <p class="lede">
+        We print in small runs with a local supplier, so margins are better than
+        they look. Everything left over goes straight into the shelter.
+      </p>
+    </div>
+  </section>
+
+  <div class="wrap shop-body">
+    {categories.length > 1 && (
+      <nav class="cat-bar" aria-label="Product categories">
+        <ul>
+          <li>
+            <a href="/shop" aria-current={!active ? 'page' : undefined}>Everything</a>
+          </li>
+          {categories.map((c) => (
+            <li>
+              <a
+                href={`/shop?category=${encodeURIComponent(c.slug)}`}
+                aria-current={active?._id === c._id ? 'page' : undefined}
+              >{c.name}</a>
+            </li>
+          ))}
+        </ul>
+      </nav>
+    )}
+
+    {failed ? (
+      <div class="empty">
+        <h2>We could not load the shop</h2>
+        <p class="muted">Something went wrong our end. Please try again in a moment.</p>
+        <a class="btn btn--primary" href="/shop">Try again</a>
+      </div>
+    ) : products.length === 0 ? (
+      <div class="empty">
+        <h2>Nothing here yet</h2>
+        <p class="muted">
+          {active
+            ? `There is nothing in ${active.name} at the moment.`
+            : 'The shop is being restocked. Do check back shortly.'}
+        </p>
+        {active && <a class="btn btn--primary" href="/shop">See everything</a>}
+      </div>
+    ) : (
+      <div class="grid grid--cards">
+        {products.map((p, i) => <ProductCard product={p} eager={i < 4} />)}
+      </div>
+    )}
+  </div>
+</Layout>
+
+<style>
+  .page-head { padding-block: clamp(2rem, 1.5rem + 2.5vw, 3.5rem) 1.5rem; }
+  .shop-body { padding-bottom: 4rem; }
+  .cat-bar { margin-bottom: 2rem; }
+  .cat-bar ul {
+    list-style: none; display: flex; flex-wrap: wrap; gap: .5rem; margin: 0; padding: 0;
+  }
+  .cat-bar a {
+    display: block; padding: .45rem .95rem; border-radius: 999px;
+    border: 1px solid var(--border-strong); background: var(--surface);
+    font-family: var(--font-head); font-weight: 600; font-size: var(--step--1);
+    color: var(--ink); text-decoration: none;
+  }
+  .cat-bar a:hover { background: var(--teal-tint); color: var(--teal-dark); border-color: var(--teal); }
+  .cat-bar a[aria-current='page'] { background: var(--teal); border-color: var(--teal); color: #fff; }
+
+  .empty {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); padding: clamp(2rem, 1.5rem + 2vw, 3.5rem); text-align: center;
+  }
+  .empty h2 { font-size: var(--step-2); }
+</style>

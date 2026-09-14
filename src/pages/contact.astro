@@ -1,0 +1,150 @@
+---
+import Layout from '../layouts/Layout.astro';
+import EnquiryForm from '../components/EnquiryForm.tsx';
+import { SITE } from '../lib/site';
+
+const { address, geo } = SITE;
+const fullAddress = `${address.line1}, ${address.locality}, ${address.postcode}`;
+
+// OpenStreetMap needs no API key and sets no advertising cookies, which keeps
+// the privacy policy honest.
+const bbox = [geo.lng - 0.012, geo.lat - 0.008, geo.lng + 0.012, geo.lat + 0.008].join('%2C');
+const mapSrc = `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${geo.lat}%2C${geo.lng}`;
+const mapLink = `https://www.openstreetmap.org/?mlat=${geo.lat}&mlon=${geo.lng}#map=16/${geo.lat}/${geo.lng}`;
+---
+
+<Layout>
+  <section class="page-head">
+    <div class="wrap">
+      <p class="kicker">Contact</p>
+      <h1>Come and find us</h1>
+      <p class="lede">
+        You are welcome to visit during opening hours without an appointment.
+        If you want to meet a particular animal, ring first — they may be at the
+        vet or out with a volunteer.
+      </p>
+    </div>
+  </section>
+
+  <div class="wrap contact-grid">
+    <div class="contact-details">
+      <section aria-labelledby="where-heading">
+        <h2 id="where-heading">Where we are</h2>
+        <address>
+          {address.line1}<br />
+          {address.locality}<br />
+          {address.region} {address.postcode}<br />
+          {address.country}
+        </address>
+        <p class="contact-links">
+          <a href={mapLink} target="_blank" rel="noopener noreferrer">
+            Open in maps<span class="visually-hidden"> (opens in a new tab)</span>
+          </a>
+        </p>
+      </section>
+
+      <section aria-labelledby="reach-heading">
+        <h2 id="reach-heading">How to reach us</h2>
+        <dl class="contact-list">
+          <div>
+            <dt>Phone</dt>
+            <dd><a href={`tel:${SITE.phoneHref}`}>{SITE.phone}</a></dd>
+          </div>
+          <div>
+            <dt>General enquiries</dt>
+            <dd><a href={`mailto:${SITE.email}`}>{SITE.email}</a></dd>
+          </div>
+          <div>
+            <dt>Adoptions</dt>
+            <dd><a href={`mailto:${SITE.adoptionsEmail}`}>{SITE.adoptionsEmail}</a></dd>
+          </div>
+        </dl>
+      </section>
+
+      <section aria-labelledby="hours-heading">
+        <h2 id="hours-heading">Opening hours</h2>
+        <dl class="contact-list hours">
+          {SITE.hours.map((h) => (
+            <div>
+              <dt>{h.days}</dt>
+              <dd>{h.time}</dd>
+            </div>
+          ))}
+        </dl>
+        <p class="muted hours-note">
+          The phone is answered from 9am on days we are open. Outside those
+          hours please email — we read it every morning.
+        </p>
+      </section>
+    </div>
+
+    <div class="contact-form">
+      <h2>Send us a message</h2>
+      <p class="muted">
+        For anything general. If you want to adopt a specific animal, the
+        <a href="/apply"> adoption application</a> is the faster route.
+      </p>
+      <noscript>
+        <p class="alert alert--warn">
+          This form needs JavaScript. Please email
+          <a href={`mailto:${SITE.email}`}>{SITE.email}</a> instead.
+        </p>
+      </noscript>
+      <EnquiryForm client:visible />
+    </div>
+  </div>
+
+  <section class="section map-section" aria-labelledby="map-heading">
+    <div class="wrap">
+      <h2 id="map-heading" class="visually-hidden">Map</h2>
+      <iframe
+        class="map"
+        src={mapSrc}
+        title={`Map showing ${SITE.name} at ${fullAddress}`}
+        loading="lazy"
+        referrerpolicy="no-referrer-when-downgrade"
+      ></iframe>
+      <p class="map-fallback muted">
+        Trouble with the map? <a href={mapLink} target="_blank" rel="noopener noreferrer">
+          Open it directly<span class="visually-hidden"> (opens in a new tab)</span></a>,
+        or the postcode is <strong>{address.postcode}</strong>.
+      </p>
+    </div>
+  </section>
+</Layout>
+
+<style>
+  .page-head { padding-block: clamp(2rem, 1.5rem + 2.5vw, 3.5rem) 1.5rem; }
+  .contact-grid {
+    display: grid; gap: clamp(1.75rem, 1rem + 3vw, 3rem);
+    align-items: start; padding-bottom: 3rem;
+  }
+  @media (min-width: 880px) { .contact-grid { grid-template-columns: .85fr 1.15fr; } }
+
+  .contact-details section + section { margin-top: 2rem; }
+  .contact-details h2 { font-size: var(--step-1); }
+  address { font-style: normal; line-height: 1.8; }
+  .contact-links { margin-top: .6rem; font-size: var(--step--1); }
+
+  .contact-list { margin: 0; display: grid; gap: .7rem; }
+  .contact-list dt { font-size: var(--step--1); color: var(--ink-soft); }
+  .contact-list dd { margin: .1rem 0 0; font-weight: 600; font-family: var(--font-head); }
+  .hours div { display: flex; justify-content: space-between; gap: 1rem; align-items: baseline; }
+  .hours dt { font-family: var(--font-body); }
+  .hours dd { font-weight: 600; }
+  .hours-note { font-size: var(--step--1); margin-top: .9rem; }
+
+  .contact-form {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); padding: clamp(1.25rem, 1rem + 1.5vw, 2rem);
+    box-shadow: var(--shadow-sm);
+  }
+  .contact-form h2 { font-size: var(--step-2); margin-top: 0; }
+
+  .map-section { padding-top: 0; }
+  .map {
+    width: 100%; height: clamp(280px, 40vw, 440px); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); display: block; background: var(--cream-deep);
+  }
+  .map-fallback { margin-top: .75rem; font-size: var(--step--1); }
+</style>

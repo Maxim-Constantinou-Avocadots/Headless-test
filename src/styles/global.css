@@ -310,3 +310,106 @@ fieldset { border: 0; padding: 0; margin: 0 0 1.5rem; }
 }
 .app-actions .btn--primary { margin-left: auto; }
 .app-footnote { margin: 1rem 0 0; font-size: var(--step--1); }
+
+/* ---------- add to cart (React island) ----------------------------------- */
+.atc {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 1.25rem;
+}
+.atc-option { margin-bottom: 1.25rem; }
+.atc-choices { display: flex; flex-wrap: wrap; gap: .5rem; }
+.atc-choice label {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 46px; min-height: 44px; padding: .45rem .9rem;
+  border: 1.5px solid var(--border-strong); border-radius: var(--radius);
+  font-family: var(--font-head); font-weight: 600; font-size: var(--step--1);
+  cursor: pointer; background: var(--surface);
+}
+.atc-choice label:hover { border-color: var(--teal); background: var(--teal-tint); }
+.atc-choice input:checked + label { background: var(--teal); border-color: var(--teal); color: #fff; }
+/* Focus lives on the visually-hidden radio, so mirror it onto the label. */
+.atc-choice input:focus-visible + label { outline: 3px solid var(--terracotta); outline-offset: 2px; }
+.atc-choice label.is-unavailable {
+  opacity: .45; text-decoration: line-through; border-style: dashed;
+}
+
+.atc-row { display: flex; gap: .75rem; align-items: flex-end; flex-wrap: wrap; }
+.atc-qty { width: 6.5rem; margin-bottom: 0; }
+.atc-button { flex: 1; min-width: 12rem; }
+.atc-note { margin: .9rem 0 0; font-size: var(--step--1); }
+.atc-status:empty { display: none; }
+.atc-status { margin-top: 1rem; }
+.atc-status .alert { display: block; }
+.atc-status a { color: inherit; font-weight: 600; }
+
+/* ---------- basket (React island) ---------------------------------------- */
+.cart-error { display: block; margin-bottom: 1.25rem; }
+.cart-lines { list-style: none; margin: 0; padding: 0; display: grid; gap: 1rem; }
+.cart-line {
+  display: grid; align-items: center; gap: .75rem 1rem;
+  grid-template-columns: 72px 1fr; grid-template-areas: "img main" "qty remove";
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 1rem;
+}
+@media (min-width: 620px) {
+  .cart-line {
+    grid-template-columns: 72px 1fr auto auto;
+    grid-template-areas: "img main qty remove";
+  }
+}
+.cart-line img, .cart-line-noimg {
+  grid-area: img; width: 72px; height: 72px; object-fit: cover;
+  border-radius: var(--radius); background: var(--cream-deep);
+}
+.cart-line-main { grid-area: main; }
+.cart-line-name { margin: 0; font-family: var(--font-head); font-weight: 600; }
+.cart-line-price { margin: .2rem 0 0; color: var(--ink-soft); font-size: var(--step--1); }
+
+.cart-line-qty { grid-area: qty; display: flex; align-items: center; gap: .25rem; }
+.cart-line-qty input {
+  width: 3.4rem; text-align: center; min-height: 40px; padding: .35rem;
+  /* The +/− buttons are the control here; native spinners just add noise. */
+  -moz-appearance: textfield; appearance: textfield;
+}
+.cart-line-qty input::-webkit-outer-spin-button,
+.cart-line-qty input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.qty-step {
+  width: 40px; height: 40px; flex: none; cursor: pointer;
+  border: 1.5px solid var(--border-strong); border-radius: var(--radius);
+  background: var(--surface); font-size: 1.15rem; line-height: 1; color: var(--ink);
+}
+.qty-step:hover:not(:disabled) { background: var(--teal-tint); border-color: var(--teal); }
+.qty-step:disabled { opacity: .5; cursor: not-allowed; }
+
+.cart-remove {
+  grid-area: remove; justify-self: start; background: none; border: 0; cursor: pointer;
+  color: var(--ink-soft); font-size: var(--step--1); font-family: inherit;
+  text-decoration: underline; padding: .5rem 0; min-height: 44px;
+}
+.cart-remove:hover:not(:disabled) { color: var(--danger); }
+
+.cart-footer {
+  margin-top: 1.75rem; padding-top: 1.5rem; border-top: 1px solid var(--border);
+}
+.cart-subtotal {
+  display: flex; justify-content: space-between; align-items: baseline;
+  font-family: var(--font-head); font-size: var(--step-1); margin: 0 0 .3rem; max-width: none;
+}
+.cart-postage { font-size: var(--step--1); margin: 0 0 1.25rem; }
+.cart-checkout { width: 100%; }
+.cart-continue { text-align: center; margin: 1rem 0 0; font-size: var(--step--1); }
+
+.cart-skeleton { display: grid; gap: 1rem; }
+.cart-skeleton-row {
+  display: flex; gap: 1rem; align-items: center;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 1rem;
+}
+.cart-skeleton-img { width: 72px; height: 72px; flex: none; }
+.cart-skeleton-lines { flex: 1; display: grid; gap: .5rem; }
+
+/* ---------- enquiry form (React island) ---------------------------------- */
+.enquiry-status:empty { display: none; }
+.enquiry-status { margin-top: 1rem; }
+.enquiry-status .alert { display: block; margin: 0; }
+.enquiry-privacy { margin-top: 1rem; }

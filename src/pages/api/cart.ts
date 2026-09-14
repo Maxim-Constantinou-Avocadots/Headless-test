@@ -65,7 +65,9 @@ export const POST: APIRoute = async ({ request }) => {
       if (quantity <= 0) {
         await currentCartV2.removeLineItemsFromCurrentCart([lineItemId]);
       } else {
-        await currentCartV2.updateCurrentCartLineItemQuantity([{ _id: lineItemId, quantity }]);
+        await currentCartV2.updateLineItemsInCurrentCart({
+          lineItems: [{ lineItemId, quantity: { newQuantity: quantity } }],
+        });
       }
     } else if (action === 'remove') {
       const lineItemId = String(body.lineItemId ?? '');

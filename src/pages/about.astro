@@ -1,0 +1,238 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Placeholder from '../components/Placeholder.astro';
+import { SITE } from '../lib/site';
+
+const process = [
+  { title: 'Browse and apply',
+    body: 'Read the full profile — we write them honestly, including the difficult bits — then send an application for the animal you have in mind.' },
+  { title: 'We read it and ring you',
+    body: `Within ${SITE.applicationResponseDays}. It is an informal chat, and mostly it is us answering your questions rather than interrogating you.` },
+  { title: 'A home visit',
+    body: 'A volunteer comes round. We are looking at fences, stairs, escape routes and where the animal will sleep — not your housekeeping.' },
+  { title: 'Meet the animal',
+    body: 'You spend time together here, more than once if that helps. For dogs we ask that everyone in the household comes along, including any resident dog.' },
+  { title: 'Going home',
+    body: 'Paperwork, the adoption fee, and a folder of everything we know about them. Then they are yours.' },
+  { title: 'We stay in touch',
+    body: 'We ring at two weeks and again at three months. And if it ever stops working, they come back to us — no judgement, no time limit.' },
+];
+
+const team = [
+  { name: 'Ruth Ellery', role: 'Shelter manager',
+    bio: 'Started as a weekend volunteer in 2009 and never quite left. Runs intake, assessments and most of the difficult conversations.' },
+  { name: 'Dev Aturi', role: 'Head of animal care',
+    bio: 'Former veterinary nurse. Oversees medical care, rehabilitation and the ones who need a bit longer.' },
+  { name: 'Marian Cobb', role: 'Rehoming coordinator',
+    bio: 'Reads every application and does most of the home visits. Has an unnerving instinct for a good match.' },
+  { name: 'Tomasz Wrenn', role: 'Volunteer coordinator',
+    bio: 'Keeps ninety-six volunteers, four vans and one very complicated rota moving.' },
+];
+
+const faqs = [
+  { q: 'How much does it cost to adopt?',
+    a: 'Between £45 and £175 depending on the animal, and it is listed on every profile. It covers neutering, vaccination, microchipping, a health check and any treatment they needed while with us — which is almost always more than the fee. For older animals and those with medical needs we often waive it entirely.' },
+  { q: 'Do I need a garden?',
+    a: 'For most dogs yes, and it needs a fence of at least five feet. For cats it depends on the individual — some are indoor-only and are happier in a flat. Rabbits need secure outdoor space or a large indoor enclosure. Each profile says what that animal needs.' },
+  { q: 'Can I adopt if I work full time?',
+    a: 'Often, yes. It depends on the animal and on what the day actually looks like. Four hours alone with a midday visit is very different from ten hours alone. Tell us honestly on the form and we will match accordingly rather than rule you out.' },
+  { q: 'Can I adopt if I have young children?',
+    a: 'Yes, and plenty of our animals are brilliant with children. Some are not, and we say so clearly on their profile. We will never place an animal with a known bite history or a fear of children into a family home.' },
+  { q: 'What if it does not work out?',
+    a: 'They come back to us. That is not a threat or a failure — it is the deal, and it has no time limit. We would far rather have an honest phone call at week three than find out two years later. There is no fee to return an animal.' },
+  { q: 'Do you rehome outside Bristol?',
+    a: 'Up to about an hour and a half away, so most of the South West. The limit is the home visit and our ability to take an animal back quickly if needed, not the distance itself.' },
+  { q: 'Can I visit without applying?',
+    a: 'Yes. Come during opening hours and have a look around. We only ask that you do not turn up expecting to meet a specific animal without ringing first — they may be at the vet, or out with a volunteer.' },
+  { q: 'How can I help if I cannot adopt?',
+    a: 'Volunteer, foster, buy something from the shop, or sponsor a kennel. Fostering is the one we are always shortest of — especially for animals recovering from surgery who need quiet.' },
+];
+---
+
+<Layout>
+  <section class="page-head">
+    <div class="wrap">
+      <p class="kicker">About us</p>
+      <h1>Twenty-three years of second chances</h1>
+      <p class="lede">
+        {SITE.name} has been rehoming animals from a converted dairy farm on the
+        edge of Bristol since 2003. We are small, we are stubborn about matching,
+        and we have never put a healthy animal to sleep.
+      </p>
+    </div>
+  </section>
+
+  <section class="section story">
+    <div class="wrap story-grid">
+      <div class="story-copy prose">
+        <h2>How it started</h2>
+        <p>
+          Willowbrook began with a retired dairy farmer named Jean Alderwood, six
+          kennels in a converted milking parlour, and a local vet who agreed to
+          work for nothing on Tuesday evenings. The first year they rehomed
+          eleven dogs.
+        </p>
+        <p>
+          Jean died in 2017. By then the six kennels had become thirty-two, with
+          a cattery, a rabbit barn and an isolation block for new arrivals. The
+          milking parlour is still there — it is the office now, and it still
+          smells faintly of the 1970s.
+        </p>
+        <h2>What we do differently</h2>
+        <p>
+          We take the animals other shelters find difficult to place: the old
+          ones, the medically complicated ones, the ones who have been returned
+          twice and arrive expecting to be returned a third time. That means our
+          animals sometimes wait longer, and we are at peace with that.
+        </p>
+        <p>
+          We are honest on every profile. If a dog cannot live with cats, it says
+          so. If a cat has bitten someone, it says so. We would rather you
+          self-select out at the browsing stage than discover it in week two.
+        </p>
+      </div>
+      <div class="story-art" aria-hidden="true">
+        <Placeholder seed="willowbrook-about" kind="cat" ratio="3 / 4" />
+      </div>
+    </div>
+  </section>
+
+  <section class="section process-section" aria-labelledby="process-heading">
+    <div class="wrap">
+      <p class="kicker">The process</p>
+      <h2 id="process-heading">How adopting works</h2>
+      <p class="lede">
+        Six steps, usually two to four weeks from application to going home.
+      </p>
+
+      <ol class="process">
+        {process.map((step) => (
+          <li>
+            <h3>{step.title}</h3>
+            <p>{step.body}</p>
+          </li>
+        ))}
+      </ol>
+
+      <a class="btn btn--primary" href="/adopt">Start by meeting the animals</a>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="team-heading">
+    <div class="wrap">
+      <p class="kicker">The team</p>
+      <h2 id="team-heading">Who you will be dealing with</h2>
+
+      <ul class="team">
+        {team.map((person) => (
+          <li class="card team-member">
+            <div class="team-avatar" aria-hidden="true">
+              {person.name.split(' ').map((n) => n[0]).join('')}
+            </div>
+            <div>
+              <h3>{person.name}</h3>
+              <p class="team-role">{person.role}</p>
+              <p class="team-bio">{person.bio}</p>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </section>
+
+  <section class="section faq-section" aria-labelledby="faq-heading">
+    <div class="wrap faq-wrap">
+      <p class="kicker">Questions</p>
+      <h2 id="faq-heading">The things people ask most</h2>
+
+      <div class="faq">
+        {faqs.map((item) => (
+          <details class="faq-item">
+            <summary>
+              <span>{item.q}</span>
+              <span class="faq-marker" aria-hidden="true"></span>
+            </summary>
+            <div class="faq-answer"><p>{item.a}</p></div>
+          </details>
+        ))}
+      </div>
+
+      <p class="faq-more">
+        Something not covered? <a href="/contact">Ask us directly</a>.
+      </p>
+    </div>
+  </section>
+</Layout>
+
+<style>
+  .page-head { padding-block: clamp(2rem, 1.5rem + 2.5vw, 3.5rem) 1.5rem; }
+
+  .story-grid { display: grid; gap: clamp(1.5rem, 1rem + 3vw, 3rem); align-items: start; }
+  @media (min-width: 900px) { .story-grid { grid-template-columns: 1.3fr .7fr; } }
+  .story-copy h2 { font-size: var(--step-2); margin-top: 0; }
+  .story-copy h2 + p { margin-top: 0; }
+  .story-copy h2:not(:first-child) { margin-top: 2rem; }
+  .story-art { border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-sm); }
+
+  .process-section { background: var(--cream-deep); }
+  .process {
+    counter-reset: step; list-style: none; padding: 0;
+    margin: 2rem 0; display: grid; gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+  }
+  .process li {
+    counter-increment: step; position: relative;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); padding: 3.2rem 1.25rem 1.25rem;
+  }
+  .process li::before {
+    content: counter(step); position: absolute; left: 1.25rem; top: 1.25rem;
+    width: 2rem; height: 2rem; display: grid; place-items: center;
+    background: var(--teal); color: #fff; border-radius: 50%;
+    font-family: var(--font-head); font-weight: 700; font-size: .95rem;
+  }
+  .process h3 { font-size: var(--step-0); margin: 0 0 .4rem; }
+  .process p { margin: 0; font-size: var(--step--1); color: var(--ink-soft); }
+
+  .team {
+    list-style: none; padding: 0; margin: 2rem 0 0; display: grid; gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+  }
+  .team-member { flex-direction: row; gap: 1rem; padding: 1.25rem; align-items: flex-start; }
+  .team-avatar {
+    width: 54px; height: 54px; flex: none; display: grid; place-items: center;
+    border-radius: 50%; background: var(--teal-tint); color: var(--teal);
+    font-family: var(--font-head); font-weight: 700; font-size: 1.05rem;
+  }
+  .team-member h3 { font-size: var(--step-0); margin: 0; }
+  .team-role { margin: .1rem 0 .5rem; font-size: var(--step--1); color: var(--terracotta); font-weight: 600; }
+  .team-bio { margin: 0; font-size: var(--step--1); color: var(--ink-soft); }
+
+  .faq-section { background: var(--cream-deep); }
+  .faq-wrap { max-width: 820px; }
+  .faq { margin-top: 2rem; display: grid; gap: .6rem; }
+  .faq-item {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); overflow: hidden;
+  }
+  .faq-item summary {
+    display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+    padding: 1rem 1.15rem; cursor: pointer; list-style: none;
+    font-family: var(--font-head); font-weight: 600;
+  }
+  .faq-item summary::-webkit-details-marker { display: none; }
+  .faq-marker {
+    flex: none; width: 14px; height: 14px; position: relative;
+  }
+  .faq-marker::before, .faq-marker::after {
+    content: ''; position: absolute; background: var(--teal);
+    transition: transform .18s ease;
+  }
+  .faq-marker::before { inset: 6px 0; height: 2px; }
+  .faq-marker::after { inset: 0 6px; width: 2px; }
+  .faq-item[open] .faq-marker::after { transform: scaleY(0); }
+  .faq-item summary:hover { background: var(--teal-tint); }
+  .faq-answer { padding: 0 1.15rem 1.15rem; }
+  .faq-answer p { margin: 0; color: var(--ink-soft); }
+  .faq-more { margin-top: 1.5rem; font-size: var(--step--1); }
+</style>

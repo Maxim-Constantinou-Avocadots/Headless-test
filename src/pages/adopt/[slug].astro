@@ -18,7 +18,8 @@ try {
   console.error('[animal] load failed', err);
 }
 
-if (!animal) return Astro.redirect('/404', 404);
+// 404 is not a valid redirect status, so render the 404 route in place.
+if (!animal) return Astro.rewrite('/404');
 
 // A bonded partner is stored as a reference; resolve it so we can name and
 // link them rather than just saying "bonded".

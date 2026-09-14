@@ -1,0 +1,40 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { SITE } from '../lib/site';
+
+// Set explicitly so the page still answers 404 when a detail route rewrites
+// here for a missing animal or product, not just on an unmatched URL.
+Astro.response.status = 404;
+---
+
+<Layout noindex={true}>
+  <section class="notfound">
+    <div class="wrap notfound-inner">
+      <p class="kicker">Page not found</p>
+      <h1>That page has wandered off.</h1>
+      <p class="lede">
+        The most likely reason is a happy one: if you followed a link to an
+        animal, they have probably been adopted and their page has come down.
+      </p>
+
+      <div class="notfound-actions">
+        <a class="btn btn--primary" href="/adopt">See the animals looking for homes</a>
+        <a class="btn btn--ghost" href="/">Back to the home page</a>
+      </div>
+
+      <p class="notfound-help muted">
+        Certain you should have landed somewhere? Ring us on
+        <a href={`tel:${SITE.phoneHref}`}>{SITE.phone}</a> or email
+        <a href={`mailto:${SITE.email}`}>{SITE.email}</a> and we will point you
+        the right way.
+      </p>
+    </div>
+  </section>
+</Layout>
+
+<style>
+  .notfound { padding-block: clamp(3rem, 2rem + 5vw, 6rem); }
+  .notfound-inner { max-width: 620px; }
+  .notfound-actions { display: flex; gap: .75rem; flex-wrap: wrap; margin-top: 2rem; }
+  .notfound-help { margin-top: 2rem; font-size: var(--step--1); }
+</style>

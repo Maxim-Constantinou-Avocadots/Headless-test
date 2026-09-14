@@ -1,0 +1,157 @@
+---
+import { WIX_APPS } from '@wix/essentials';
+import { SEO } from '@wix/seo/components';
+import { loadSEOTagsServiceConfig } from '@wix/seo/services';
+import { seoTags } from '@wix/seo';
+
+import Layout from '../../layouts/Layout.astro';
+import Placeholder from '../../components/Placeholder.astro';
+import AddToCart from '../../components/AddToCart.tsx';
+import { getProductBySlug, getVariants } from '../../lib/store';
+import type { Product, Variant } from '../../lib/store';
+import { SITE } from '../../lib/site';
+
+// Registers the route so it appears in /_wix/pages.json, the sitemap and the
+// dashboard SEO editor. WIX_APPS must be referenced directly here: this is a
+// module-level export, so component-body variables are not in scope.
+export const wixMetadata = {
+  appDefId: WIX_APPS.checkoutAndOrders.id,
+  pageIdentifier: WIX_APPS.checkoutAndOrders.productPageMetadata.pageIdentifier,
+  identifiers: {
+    slug: WIX_APPS.checkoutAndOrders.productPageMetadata.identifiers.handle,
+  },
+};
+
+const { slug } = Astro.params;
+
+// Behind Wix's TLS-terminating proxy Astro.url can carry the internal http
+// scheme, so prefer the forwarded URL when it is present and absolute.
+const forwardedUrl = Astro.request.headers.get('x-wix-forwarded-url');
+const pageUrl =
+  forwardedUrl && URL.canParse(forwardedUrl) && /^https?:$/.test(new URL(forwardedUrl).protocol)
+    ? forwardedUrl
+    : Astro.url.href;
+
+let product: Product | null = null;
+let variants: Variant[] = [];
+let seoConfig: Awaited<ReturnType<typeof loadSEOTagsServiceConfig>> | null = null;
+
+try {
+  // Fetch the item and its SEO tags together rather than in series.
+  const [p, cfg] = await Promise.all([
+    slug ? getProductBySlug(slug) : Promise.resolve(null),
+    loadSEOTagsServiceConfig({
+      pageUrl,
+      itemType: seoTags.ItemType.STORES_PRODUCT,
+      itemData: { slug: slug! },
+    }).catch((err) => {
+      console.error('[product] SEO tags failed', err);
+      return null;
+    }),
+  ]);
+  product = p;
+  seoConfig = cfg;
+} catch (err) {
+  console.error('[product] load failed', err);
+}
+
+// 404 is not a valid redirect status, so render the 404 route in place.
+if (!product) return Astro.rewrite('/404');
+
+try {
+  variants = await getVariants(product._id);
+} catch (err) {
+  console.error('[product] variants failed', err);
+}
+
+const jsonLd = JSON.stringify({
+  '@context': 'https://schema.org',
+  '@type': 'Product',
+  name: product.name,
+  description: product.description,
+  ...(product.image ? { image: product.image } : {}),
+  brand: { '@type': 'Brand', name: SITE.name },
+  offers: {
+    '@type': 'Offer',
+    priceCurrency: SITE.currency,
+    availability: product.inStock
+      ? 'https://schema.org/InStock'
+      : 'https://schema.org/OutOfStock',
+  },
+});
+---
+
+<Layout jsonLd={jsonLd}>
+  {seoConfig && <SEO.Tags seoTagsServiceConfig={seoConfig} slot="seo-tags" />}
+
+  <nav class="crumbs wrap" aria-label="Breadcrumb">
+    <ol>
+      <li><a href="/">Home</a></li>
+      <li><a href="/shop">Shop</a></li>
+      <li aria-current="page">{product.name}</li>
+    </ol>
+  </nav>
+
+  <article class="wrap product">
+    <div class="product-media">
+      {product.image
+        ? <img src={product.image} alt={product.name} width="900" height="900" decoding="async" />
+        : <Placeholder seed={product.slug} kind="product" label={product.name} ratio="1 / 1" />}
+    </div>
+
+    <div class="product-main">
+      <h1>{product.name}</h1>
+      <p class="product-price">
+        {product.price}
+        {product.compareAt && <span class="product-was">{product.compareAt}</span>}
+      </p>
+
+      {product.description && <p class="product-desc">{product.description}</p>}
+
+      <AddToCart
+        client:load
+        productId={product._id}
+        productName={product.name}
+        variants={variants}
+        inStock={product.inStock}
+      />
+
+      <p class="product-note muted">
+        Posted second class within the UK, usually within three working days.
+        Everything is packed by volunteers, so the odd wonky label is part of
+        the deal.
+      </p>
+
+      <p class="back-link"><a href="/shop">← Back to the shop</a></p>
+    </div>
+  </article>
+</Layout>
+
+<style>
+  .crumbs { padding-block: 1.25rem .5rem; }
+  .crumbs ol { list-style: none; display: flex; flex-wrap: wrap; gap: .4rem; margin: 0; padding: 0; font-size: var(--step--1); }
+  .crumbs li + li::before { content: '/'; margin-right: .4rem; color: var(--ink-soft); }
+  .crumbs a { color: var(--ink-soft); text-decoration: none; }
+  .crumbs a:hover { color: var(--teal); text-decoration: underline; }
+  .crumbs [aria-current] { color: var(--ink); font-weight: 600; }
+
+  .product {
+    display: grid; gap: clamp(1.5rem, 1rem + 3vw, 3rem);
+    align-items: start; padding-block: 1rem 4rem;
+  }
+  @media (min-width: 900px) { .product { grid-template-columns: 1fr 1fr; } }
+
+  .product-media img, .product-media :global(.ph) {
+    width: 100%; aspect-ratio: 1 / 1; object-fit: cover;
+    border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); background: var(--cream-deep);
+  }
+  .product-main h1 { margin-bottom: .3em; }
+  .product-price {
+    font-family: var(--font-head); font-weight: 700; font-size: var(--step-2);
+    color: var(--teal); margin: 0 0 1rem;
+  }
+  .product-was { margin-left: .6rem; font-size: var(--step-0); color: var(--ink-soft); text-decoration: line-through; font-weight: 400; }
+  .product-desc { margin-bottom: 1.75rem; }
+  .product-note { font-size: var(--step--1); margin-top: 1.75rem; }
+  .back-link { margin-top: 1.5rem; font-size: var(--step--1); }
+</style>

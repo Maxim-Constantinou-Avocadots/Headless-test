@@ -1,0 +1,28 @@
+---
+import Layout from '../layouts/Layout.astro';
+import CartView from '../components/CartView.tsx';
+---
+
+<Layout>
+  <section class="page-head">
+    <div class="wrap">
+      <p class="kicker">Basket</p>
+      <h1>Your basket</h1>
+    </div>
+  </section>
+
+  <div class="wrap cart-wrap">
+    <noscript>
+      <p class="alert alert--warn">
+        Your basket needs JavaScript to display. Please enable it, or ring the
+        shelter and we will take your order over the phone.
+      </p>
+    </noscript>
+    <CartView client:only="react" />
+  </div>
+</Layout>
+
+<style>
+  .page-head { padding-block: clamp(2rem, 1.5rem + 2.5vw, 3.5rem) 1rem; }
+  .cart-wrap { padding-bottom: 4rem; max-width: 820px; }
+</style>

@@ -1,0 +1,105 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { SITE } from '../lib/site';
+---
+
+<Layout>
+  <section class="page-head">
+    <div class="wrap">
+      <p class="kicker">Privacy</p>
+      <h1>Privacy policy</h1>
+      <p class="lede">
+        Plainly: we collect only what we need to rehome animals and run the
+        shop, we do not sell anything to anybody, and you can ask us to delete
+        your data at any time.
+      </p>
+    </div>
+  </section>
+
+  <div class="wrap policy prose">
+    <h2>What we collect, and why</h2>
+    <h3>Adoption applications</h3>
+    <p>
+      Your name, contact details, address, and your answers about your home and
+      your experience with animals. We need this to assess whether a particular
+      animal will do well with you — it is the entire basis of the decision.
+      Applications are readable only by shelter staff.
+    </p>
+
+    <h3>Newsletter</h3>
+    <p>
+      Your email address, and your first name if you give it. Used only to send
+      the monthly email. Every one carries an unsubscribe link, and we act on it
+      the same day.
+    </p>
+
+    <h3>Contact form</h3>
+    <p>
+      Your name, email, and message. Used to reply to you and nothing else.
+    </p>
+
+    <h3>Shop orders</h3>
+    <p>
+      Orders and payments are handled by Wix, which processes your delivery and
+      payment details on our behalf. We never see your card number.
+    </p>
+
+    <h2>How long we keep it</h2>
+    <ul>
+      <li><strong>Successful applications:</strong> for the life of the animal, so we can help if something changes.</li>
+      <li><strong>Unsuccessful applications:</strong> two years, in case you apply again.</li>
+      <li><strong>Newsletter:</strong> until you unsubscribe.</li>
+      <li><strong>Enquiries:</strong> twelve months.</li>
+    </ul>
+
+    <h2>Who we share it with</h2>
+    <p>
+      Nobody, other than the service providers we need to run the site — Wix
+      hosts it and processes shop orders. We do not sell or trade personal data,
+      and we never share application details with other shelters without asking
+      you first.
+    </p>
+
+    <h2>Cookies and tracking</h2>
+    <p>
+      We use only what makes the site work: a session cookie that remembers
+      your shopping basket. There is no advertising or analytics tracking. The
+      map on our contact page is served by OpenStreetMap, which does not set
+      advertising cookies.
+    </p>
+
+    <h2>Your rights</h2>
+    <p>
+      Under UK GDPR you can ask to see the data we hold about you, correct it,
+      have it deleted, or object to how we use it. Email
+      <a href={`mailto:${SITE.email}`}>{SITE.email}</a> and we will respond
+      within a month. If you are unhappy with our response you can complain to
+      the Information Commissioner's Office at ico.org.uk.
+    </p>
+
+    <h2>Contact</h2>
+    <p>
+      {SITE.name}, {SITE.address.line1}, {SITE.address.locality},
+      {' '}{SITE.address.postcode}.<br />
+      <a href={`mailto:${SITE.email}`}>{SITE.email}</a> ·
+      <a href={`tel:${SITE.phoneHref}`}>{SITE.phone}</a>
+    </p>
+
+    <p class="policy-note muted">
+      This is placeholder wording for a demonstration site. Before going live,
+      have it reviewed against your actual data-handling practices and
+      registration with the ICO.
+    </p>
+  </div>
+</Layout>
+
+<style>
+  .page-head { padding-block: clamp(2rem, 1.5rem + 2.5vw, 3.5rem) 1rem; }
+  .policy { padding-bottom: 4rem; max-width: 720px; }
+  .policy h2 { font-size: var(--step-2); margin-top: 2.5rem; }
+  .policy h3 { font-size: var(--step-0); margin-top: 1.5rem; }
+  .policy-note {
+    margin-top: 3rem; padding-top: 1.25rem; border-top: 1px solid var(--border);
+    font-size: var(--step--1);
+  }
+</style>
