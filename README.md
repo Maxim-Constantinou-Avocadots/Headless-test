@@ -259,6 +259,13 @@ mobile nav stays open without JavaScript rather than becoming unreachable. The
 application form, basket and contact form do need JavaScript, and each says so
 in a `<noscript>` block with the shelter's phone number.
 
+**The sitemap is served at `/sitemap-pages.xml`, not `/sitemap.xml`.** Wix
+reserves the latter at the platform level and answers it with its own 404
+before the request reaches Astro. `src/pages/sitemap-pages.xml.ts` generates
+the real one from live data, so animals and products the shelter adds appear
+without a republish; the thank-you pages, basket and 404 are excluded because
+they are noindex. The site's robots.txt has been updated to point at it.
+
 **Live queries, never pinned IDs.** Featured animals, shop categories, filter
 options and the home-page product teaser all come from live queries. Content
 added in the dashboard appears without a code change or a republish. A new CMS
