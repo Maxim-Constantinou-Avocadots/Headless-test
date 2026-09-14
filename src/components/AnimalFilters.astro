@@ -1,0 +1,156 @@
+---
+import { AGE_BRACKET_LABELS } from '../lib/format';
+import type { AnimalFilters } from '../lib/animals';
+
+interface Props {
+  filters: AnimalFilters;
+  /** Derived from the live data, so a new species appears here on its own. */
+  species: string[];
+  sizes: string[];
+  sexes: string[];
+  resultCount: number;
+}
+
+const { filters, species, sizes, sexes, resultCount } = Astro.props;
+
+// Computed here rather than in the template: a TypeScript cast with angle
+// brackets is not valid inside Astro's JSX-like template syntax.
+const ageBrackets = Object.keys(AGE_BRACKET_LABELS) as Array<keyof typeof AGE_BRACKET_LABELS>;
+
+const GOOD_WITH = [
+  { value: 'kids', label: 'Children' },
+  { value: 'dogs', label: 'Dogs' },
+  { value: 'cats', label: 'Cats' },
+];
+---
+
+{/*
+  A plain GET form. Without JavaScript the "Apply filters" button submits and
+  the server renders the filtered page; with JavaScript the form auto-submits
+  on change. Either way the URL carries the full state, so a filtered view can
+  be shared or bookmarked.
+*/}
+<form class="filters" method="get" action="/adopt" data-animal-filters>
+  <div class="filters-head">
+    <h2 id="filters-heading">Filter</h2>
+    <p class="filters-count" role="status" aria-live="polite">
+      {resultCount} {resultCount === 1 ? 'animal' : 'animals'}
+    </p>
+  </div>
+
+  <div class="field">
+    <label for="q">Search by name or breed</label>
+    <input type="search" id="q" name="q" value={filters.search} placeholder="e.g. Luna, or collie" />
+  </div>
+
+  <fieldset>
+    <legend class="fieldset-legend">Species</legend>
+    {species.map((s) => (
+      <div class="check">
+        <input type="checkbox" id={`species-${s}`} name="species" value={s} checked={filters.species.includes(s)} />
+        <label for={`species-${s}`}>{s}</label>
+      </div>
+    ))}
+  </fieldset>
+
+  <fieldset>
+    <legend class="fieldset-legend">Age</legend>
+    {ageBrackets.map((b) => (
+      <div class="check">
+        <input type="checkbox" id={`age-${b}`} name="age" value={b} checked={filters.age.includes(b)} />
+        <label for={`age-${b}`}>{AGE_BRACKET_LABELS[b]}</label>
+      </div>
+    ))}
+  </fieldset>
+
+  <fieldset>
+    <legend class="fieldset-legend">Size</legend>
+    {sizes.map((s) => (
+      <div class="check">
+        <input type="checkbox" id={`size-${s}`} name="size" value={s} checked={filters.size.includes(s)} />
+        <label for={`size-${s}`}>{s}</label>
+      </div>
+    ))}
+  </fieldset>
+
+  <fieldset>
+    <legend class="fieldset-legend">Sex</legend>
+    {sexes.map((s) => (
+      <div class="check">
+        <input type="checkbox" id={`sex-${s}`} name="sex" value={s} checked={filters.sex.includes(s)} />
+        <label for={`sex-${s}`}>{s}</label>
+      </div>
+    ))}
+  </fieldset>
+
+  <fieldset>
+    <legend class="fieldset-legend">Gets on with</legend>
+    {GOOD_WITH.map((g) => (
+      <div class="check">
+        <input type="checkbox" id={`with-${g.value}`} name="with" value={g.value} checked={filters.goodWith.includes(g.value)} />
+        <label for={`with-${g.value}`}>{g.label}</label>
+      </div>
+    ))}
+  </fieldset>
+
+  <fieldset>
+    <legend class="fieldset-legend">Availability</legend>
+    <div class="check">
+      <input type="checkbox" id="pending" name="pending" value="1" checked={filters.includePending} />
+      <label for="pending">Include animals with an application pending</label>
+    </div>
+  </fieldset>
+
+  <div class="field">
+    <label for="sort">Sort by</label>
+    <select id="sort" name="sort">
+      <option value="newest" selected={filters.sort === 'newest'}>Newest arrivals</option>
+      <option value="name" selected={filters.sort === 'name'}>Name A–Z</option>
+      <option value="age" selected={filters.sort === 'age'}>Youngest first</option>
+    </select>
+  </div>
+
+  <div class="filters-actions">
+    <button class="btn btn--primary btn--sm" type="submit" data-filters-submit>Apply filters</button>
+    <a class="btn btn--ghost btn--sm" href="/adopt">Clear all</a>
+  </div>
+</form>
+
+<style>
+  .filters {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); padding: 1.25rem; box-shadow: var(--shadow-sm);
+  }
+  .filters-head {
+    display: flex; align-items: baseline; justify-content: space-between;
+    gap: .75rem; margin-bottom: 1rem;
+  }
+  .filters-head h2 { font-size: var(--step-1); margin: 0; }
+  .filters-count { margin: 0; font-size: var(--step--1); color: var(--ink-soft); }
+  .filters fieldset { border-top: 1px solid var(--border); padding-top: .9rem; margin-bottom: 1.1rem; }
+  .filters-actions { display: flex; gap: .5rem; flex-wrap: wrap; padding-top: .25rem; }
+</style>
+
+<script>
+  // Progressive enhancement: with JS the form submits itself on change, so the
+  // explicit button is only needed when scripting is unavailable.
+  const form = document.querySelector<HTMLFormElement>('[data-animal-filters]');
+  if (form) {
+    const submit = form.querySelector<HTMLButtonElement>('[data-filters-submit]');
+    submit?.classList.add('visually-hidden');
+
+    let timer: number | undefined;
+    const go = (delay: number) => {
+      window.clearTimeout(timer);
+      timer = window.setTimeout(() => form.submit(), delay);
+    };
+
+    form.addEventListener('change', (e) => {
+      const t = e.target as HTMLElement;
+      go(t instanceof HTMLInputElement && t.type === 'search' ? 400 : 0);
+    });
+    form.addEventListener('input', (e) => {
+      if ((e.target as HTMLInputElement).type === 'search') go(500);
+    });
+  }
+</script>

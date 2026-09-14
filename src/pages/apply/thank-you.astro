@@ -1,0 +1,84 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { SITE } from '../../lib/site';
+
+const animal = Astro.url.searchParams.get('animal') ?? '';
+---
+
+<Layout noindex={true}>
+  <section class="thanks">
+    <div class="wrap thanks-inner">
+      <p class="thanks-mark" aria-hidden="true">✓</p>
+      <h1>Thank you — we have your application{animal ? ` for ${animal}` : ''}.</h1>
+      <p class="lede">
+        A real person reads every application. Here is exactly what happens next,
+        so you are not left wondering.
+      </p>
+
+      <ol class="next-steps">
+        <li>
+          <strong>We read it properly.</strong> Usually within
+          {SITE.applicationResponseDays}. If we are quiet it may be sooner; if we
+          have just had an intake it may be the far end of that.
+        </li>
+        <li>
+          <strong>We ring you for a chat.</strong> Fifteen minutes, informal. It
+          is mostly us answering your questions.
+        </li>
+        <li>
+          <strong>A home visit.</strong> One of our volunteers comes round. We are
+          not inspecting your housekeeping — we are checking fences, stairs and
+          escape routes.
+        </li>
+        <li>
+          <strong>A meet.</strong> You come and spend time with the animal, more
+          than once if it helps.
+        </li>
+        <li>
+          <strong>Going home.</strong> If everyone is happy, we sort the paperwork
+          and the fee, and off you go.
+        </li>
+      </ol>
+
+      <p class="thanks-note">
+        We will email a confirmation shortly. If you do not hear anything within
+        a week, please do chase us on
+        <a href={`mailto:${SITE.adoptionsEmail}`}>{SITE.adoptionsEmail}</a> or
+        <a href={`tel:${SITE.phoneHref}`}>{SITE.phone}</a> — occasionally an
+        email goes astray, and we would rather you nudged us.
+      </p>
+
+      <div class="thanks-actions">
+        <a class="btn btn--ghost" href="/adopt">Back to the animals</a>
+        <a class="btn btn--secondary" href="/shop">Support the shelter</a>
+      </div>
+    </div>
+  </section>
+</Layout>
+
+<style>
+  .thanks { padding-block: clamp(2.5rem, 2rem + 3vw, 5rem); }
+  .thanks-inner { max-width: 720px; }
+  .thanks-mark {
+    width: 56px; height: 56px; display: grid; place-items: center;
+    background: var(--ok-tint); color: var(--ok); border-radius: 50%;
+    font-size: 1.6rem; font-weight: 700; margin: 0 0 1.25rem;
+  }
+  .next-steps {
+    counter-reset: step; list-style: none; margin: 2rem 0; padding: 0;
+    display: grid; gap: 1rem;
+  }
+  .next-steps li {
+    counter-increment: step; position: relative;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 1rem 1.15rem 1rem 3.4rem;
+  }
+  .next-steps li::before {
+    content: counter(step); position: absolute; left: 1rem; top: 1rem;
+    width: 1.7rem; height: 1.7rem; display: grid; place-items: center;
+    background: var(--teal); color: #fff; border-radius: 50%;
+    font-family: var(--font-head); font-weight: 700; font-size: .85rem;
+  }
+  .thanks-note { font-size: var(--step--1); color: var(--ink-soft); }
+  .thanks-actions { display: flex; gap: .75rem; flex-wrap: wrap; margin-top: 2rem; }
+</style>

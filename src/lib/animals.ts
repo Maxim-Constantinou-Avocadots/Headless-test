@@ -141,9 +141,19 @@ export const EMPTY_FILTERS: AnimalFilters = {
   search: '', includePending: false, sort: 'newest',
 };
 
-/** Read filters out of a URL query string so a filtered view is shareable. */
+/**
+ * Read filters out of a URL query string so a filtered view is shareable.
+ *
+ * Accepts both shapes: the checkbox form submits repeated keys
+ * (`?species=Dog&species=Cat`), while a hand-written or shortened URL may use
+ * a comma-separated list (`?species=Dog,Cat`). Both parse to the same thing.
+ */
 export function filtersFromParams(params: URLSearchParams): AnimalFilters {
-  const list = (k: string) => (params.get(k) ?? '').split(',').map((s) => s.trim()).filter(Boolean);
+  const list = (k: string) =>
+    params.getAll(k)
+      .flatMap((v) => v.split(','))
+      .map((s) => s.trim())
+      .filter(Boolean);
   const sort = params.get('sort');
   return {
     species: list('species'),
@@ -157,14 +167,17 @@ export function filtersFromParams(params: URLSearchParams): AnimalFilters {
   };
 }
 
-/** Inverse of filtersFromParams — only non-default values are written. */
+/**
+ * Inverse of filtersFromParams — only non-default values are written, using
+ * the same repeated-key shape the filter form submits.
+ */
 export function paramsFromFilters(f: AnimalFilters): string {
   const p = new URLSearchParams();
-  if (f.species.length) p.set('species', f.species.join(','));
-  if (f.size.length) p.set('size', f.size.join(','));
-  if (f.age.length) p.set('age', f.age.join(','));
-  if (f.sex.length) p.set('sex', f.sex.join(','));
-  if (f.goodWith.length) p.set('with', f.goodWith.join(','));
+  for (const v of f.species) p.append('species', v);
+  for (const v of f.size) p.append('size', v);
+  for (const v of f.age) p.append('age', v);
+  for (const v of f.sex) p.append('sex', v);
+  for (const v of f.goodWith) p.append('with', v);
   if (f.search) p.set('q', f.search);
   if (f.includePending) p.set('pending', '1');
   if (f.sort !== 'newest') p.set('sort', f.sort);

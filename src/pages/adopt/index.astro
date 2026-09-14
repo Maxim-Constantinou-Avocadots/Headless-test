@@ -1,0 +1,178 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import AnimalCard from '../../components/AnimalCard.astro';
+import AnimalFilters from '../../components/AnimalFilters.astro';
+import {
+  getAllAnimals, filtersFromParams, applyFilters, isFiltered, happyEndings,
+} from '../../lib/animals';
+import type { Animal } from '../../lib/animals';
+
+const PER_PAGE = 12;
+
+const params = Astro.url.searchParams;
+const filters = filtersFromParams(params);
+const page = Math.max(1, Number(params.get('page')) || 1);
+
+let all: Animal[] = [];
+let failed = false;
+try {
+  const res = await getAllAnimals();
+  all = res.animals;
+  failed = res.failed;
+} catch (err) {
+  console.error('[adopt] load failed', err);
+  failed = true;
+}
+
+const matched = applyFilters(all, filters);
+const totalPages = Math.max(1, Math.ceil(matched.length / PER_PAGE));
+const current = Math.min(page, totalPages);
+const visible = matched.slice((current - 1) * PER_PAGE, current * PER_PAGE);
+const adopted = happyEndings(all);
+
+// Filter options come from the data, so a species the shelter starts taking
+// appears in the filters with no code change.
+const uniq = (vals: string[]) => [...new Set(vals.filter(Boolean))].sort();
+const speciesOptions = uniq(all.map((a) => a.species));
+const sizeOrder = ['Small', 'Medium', 'Large'];
+const sizeOptions = uniq(all.map((a) => a.size))
+  .sort((a, b) => sizeOrder.indexOf(a) - sizeOrder.indexOf(b));
+const sexOptions = uniq(all.map((a) => a.sex));
+
+/** Build a page link that keeps the current filters intact. */
+function pageHref(n: number): string {
+  const p = new URLSearchParams(params);
+  if (n <= 1) p.delete('page'); else p.set('page', String(n));
+  const qs = p.toString();
+  return qs ? `/adopt?${qs}` : '/adopt';
+}
+
+const filtered = isFiltered(filters);
+---
+
+<Layout>
+  <section class="page-head">
+    <div class="wrap">
+      <p class="kicker">Adopt</p>
+      <h1>Animals looking for homes</h1>
+      <p class="lede">
+        Everyone here is waiting for the right household — not just any household.
+        Use the filters to narrow things down, then read the full profile before
+        you apply.
+      </p>
+    </div>
+  </section>
+
+  <div class="wrap adopt-layout">
+    <aside class="adopt-filters" aria-labelledby="filters-heading">
+      <AnimalFilters
+        filters={filters}
+        species={speciesOptions}
+        sizes={sizeOptions}
+        sexes={sexOptions}
+        resultCount={matched.length}
+      />
+    </aside>
+
+    <section class="adopt-results" aria-label="Search results">
+      {failed ? (
+        <div class="empty">
+          <h2>We could not load the animals</h2>
+          <p class="muted">
+            Something went wrong at our end — it is not you. Please refresh in a
+            moment, or ring the shelter and we will talk you through who is here.
+          </p>
+          <a class="btn btn--primary" href="/adopt">Try again</a>
+        </div>
+      ) : visible.length === 0 ? (
+        <div class="empty">
+          <h2>{filtered ? 'No matches for those filters' : 'No animals listed right now'}</h2>
+          <p class="muted">
+            {filtered
+              ? 'That is usually a sign the filters are a little tight rather than that we have nobody. Try clearing one or two.'
+              : 'Everyone currently with us has found a home. New arrivals are listed within a day or two — do check back.'}
+          </p>
+          {filtered && <a class="btn btn--primary" href="/adopt">Clear all filters</a>}
+        </div>
+      ) : (
+        <>
+          <div class="grid grid--cards">
+            {visible.map((animal, i) => <AnimalCard animal={animal} eager={i < 3} />)}
+          </div>
+
+          {totalPages > 1 && (
+            <nav class="pager" aria-label="Pagination">
+              <a
+                class="btn btn--ghost btn--sm"
+                href={pageHref(current - 1)}
+                aria-disabled={current === 1 ? 'true' : undefined}
+                tabindex={current === 1 ? -1 : undefined}
+              >Previous</a>
+
+              <p class="pager-status">Page {current} of {totalPages}</p>
+
+              <a
+                class="btn btn--ghost btn--sm"
+                href={pageHref(current + 1)}
+                aria-disabled={current === totalPages ? 'true' : undefined}
+                tabindex={current === totalPages ? -1 : undefined}
+              >Next</a>
+            </nav>
+          )}
+        </>
+      )}
+    </section>
+  </div>
+
+  {adopted.length > 0 && (
+    <section class="section happy" aria-labelledby="happy-heading">
+      <div class="wrap">
+        <div class="section-head">
+          <div>
+            <p class="kicker">Happy endings</p>
+            <h2 id="happy-heading">They found their people</h2>
+          </div>
+        </div>
+        <p class="happy-lede muted">
+          A reminder of what this is all for — and of what the shop and the
+          donations pay for.
+        </p>
+        <div class="grid grid--cards">
+          {adopted.slice(0, 4).map((animal) => <AnimalCard animal={animal} />)}
+        </div>
+      </div>
+    </section>
+  )}
+</Layout>
+
+<style>
+  .page-head { padding-block: clamp(2rem, 1.5rem + 2.5vw, 3.5rem) 1.5rem; }
+  .page-head h1 { margin-bottom: .35em; }
+
+  .adopt-layout {
+    display: grid; gap: clamp(1.5rem, 1rem + 2vw, 2.5rem);
+    align-items: start; padding-bottom: 3rem;
+  }
+  @media (min-width: 900px) { .adopt-layout { grid-template-columns: 290px 1fr; } }
+  @media (min-width: 900px) { .adopt-filters { position: sticky; top: 92px; } }
+
+  .empty {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); padding: clamp(2rem, 1.5rem + 2vw, 3.5rem);
+    text-align: center;
+  }
+  .empty h2 { font-size: var(--step-2); }
+  .empty p { margin-inline: auto; }
+
+  .pager {
+    display: flex; align-items: center; justify-content: center;
+    gap: 1rem; margin-top: 2.5rem; flex-wrap: wrap;
+  }
+  .pager-status { margin: 0; font-size: var(--step--1); color: var(--ink-soft); }
+  .pager [aria-disabled='true'] { opacity: .45; pointer-events: none; }
+
+  .happy { background: var(--cream-deep); }
+  .happy-lede { margin-top: -.75rem; margin-bottom: 1.75rem; }
+  .section-head { margin-bottom: 1rem; }
+  .section-head h2 { margin: 0; }
+</style>

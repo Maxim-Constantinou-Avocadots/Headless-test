@@ -1,0 +1,321 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Placeholder from '../../components/Placeholder.astro';
+import StatusBadge from '../../components/StatusBadge.astro';
+import { getAnimalBySlug, getAnimalById } from '../../lib/animals';
+import type { Animal } from '../../lib/animals';
+import { formatAge, formatFee, formatDate, toPlain } from '../../lib/format';
+import { imageUrl, galleryUrls } from '../../lib/media';
+import { sanitizeRichText } from '../../lib/sanitize';
+import { SITE } from '../../lib/site';
+
+const { slug } = Astro.params;
+
+let animal: Animal | null = null;
+try {
+  animal = slug ? await getAnimalBySlug(slug) : null;
+} catch (err) {
+  console.error('[animal] load failed', err);
+}
+
+if (!animal) return Astro.redirect('/404', 404);
+
+// A bonded partner is stored as a reference; resolve it so we can name and
+// link them rather than just saying "bonded".
+let bonded: Animal | null = null;
+if (animal.bondedWith) {
+  const id = typeof animal.bondedWith === 'string' ? animal.bondedWith : animal.bondedWith?._id;
+  if (id) {
+    try { bonded = await getAnimalById(id); } catch { bonded = null; }
+  }
+}
+
+const hero = imageUrl(animal.mainImage, 1100, 825);
+const gallery = galleryUrls(animal.gallery, 1100, 825);
+const photos = [hero, ...gallery].filter(Boolean);
+
+const traits = [
+  { label: 'Species', value: animal.species },
+  { label: 'Breed', value: animal.breed },
+  { label: 'Age', value: formatAge(animal.age) },
+  { label: 'Sex', value: animal.sex },
+  { label: 'Size', value: animal.size },
+  { label: 'With us since', value: formatDate(animal.intakeDate) },
+].filter((t) => t.value);
+
+const livesWith = [
+  { label: 'Children', ok: animal.goodWithKids },
+  { label: 'Dogs', ok: animal.goodWithDogs },
+  { label: 'Cats', ok: animal.goodWithCats },
+];
+
+const care = [
+  { label: 'House trained', ok: animal.houseTrained },
+  { label: 'Neutered', ok: animal.neutered },
+  { label: 'Vaccinated', ok: animal.vaccinated },
+];
+
+const isAdopted = animal.status === 'Adopted';
+const canApply = !isAdopted;
+const body = sanitizeRichText(animal.description);
+
+// The Wix item-page SEO service has no CMS item type, so these tags are
+// authored here rather than resolved from the dashboard.
+const title = `${animal.name} — ${animal.breed}, ${formatAge(animal.age)} | ${SITE.name}`;
+const description = animal.shortDescription
+  || toPlain(animal.description, 155)
+  || `Meet ${animal.name}, a ${animal.breed} looking for a home at ${SITE.name}.`;
+const canonical = new URL(`/adopt/${animal.slug}`, Astro.site ?? Astro.url.origin).href;
+
+const jsonLd = JSON.stringify({
+  '@context': 'https://schema.org',
+  '@type': 'Article',
+  headline: `${animal.name}, a ${animal.breed} looking for a home`,
+  description,
+  ...(photos[0] ? { image: photos[0] } : {}),
+  publisher: { '@type': 'Organization', name: SITE.name },
+  mainEntityOfPage: canonical,
+});
+---
+
+<Layout jsonLd={jsonLd}>
+  <Fragment slot="seo-tags">
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <meta property="og:type" content="article" />
+    <meta property="og:title" content={`${animal.name} — looking for a home`} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:site_name" content={SITE.name} />
+    <meta property="og:locale" content={SITE.locale} />
+    {photos[0] && <meta property="og:image" content={photos[0]} />}
+    {photos[0] && <meta property="og:image:alt" content={`${animal.name}, a ${animal.breed}`} />}
+    <meta name="twitter:card" content={photos[0] ? 'summary_large_image' : 'summary'} />
+  </Fragment>
+
+  <nav class="crumbs wrap" aria-label="Breadcrumb">
+    <ol>
+      <li><a href="/">Home</a></li>
+      <li><a href="/adopt">Adopt</a></li>
+      <li aria-current="page">{animal.name}</li>
+    </ol>
+  </nav>
+
+  <article class="wrap animal">
+    <div class="animal-media">
+      {photos.length > 0 ? (
+        <>
+          <img
+            class="animal-hero"
+            id="animal-hero-image"
+            src={photos[0]}
+            alt={`${animal.name}, a ${animal.breed}`}
+            width="1100" height="825" decoding="async"
+          />
+          {photos.length > 1 && (
+            <ul class="thumbs" data-gallery aria-label={`More photographs of ${animal.name}`}>
+              {photos.map((src, i) => (
+                <li>
+                  <button
+                    type="button"
+                    data-src={src}
+                    aria-label={`Show photograph ${i + 1} of ${photos.length}`}
+                    aria-pressed={i === 0 ? 'true' : 'false'}
+                  >
+                    <img src={src} alt="" width="150" height="115" loading="lazy" decoding="async" />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </>
+      ) : (
+        <Placeholder seed={animal.slug} kind={animal.species} label={animal.name} ratio="4 / 3" />
+      )}
+    </div>
+
+    <div class="animal-main">
+      <header class="animal-header">
+        <div class="animal-title">
+          <h1>{animal.name}</h1>
+          <StatusBadge status={animal.status} />
+        </div>
+        <p class="animal-sub">{animal.shortDescription}</p>
+      </header>
+
+      {isAdopted && (
+        <p class="alert alert--ok animal-notice">
+          {animal.name} has been adopted. <a href="/adopt">See who is still waiting</a>.
+        </p>
+      )}
+      {animal.status === 'Pending' && (
+        <p class="alert alert--warn animal-notice">
+          There is an application in progress for {animal.name}. You can still apply —
+          we keep a short waiting list in case the first home is not the right fit.
+        </p>
+      )}
+
+      {bonded && (
+        <p class="alert alert--warn animal-notice">
+          {animal.name} is bonded with <a href={`/adopt/${bonded.slug}`}>{bonded.name}</a> and
+          the two must be rehomed together. The fee covers both.
+        </p>
+      )}
+
+      {animal.specialNeeds && (
+        <section class="special" aria-labelledby="special-heading">
+          <h2 id="special-heading">Extra care needed</h2>
+          <p>{animal.specialNeeds}</p>
+        </section>
+      )}
+
+      <dl class="traits">
+        {traits.map((t) => (
+          <div class="trait">
+            <dt>{t.label}</dt>
+            <dd>{t.value}</dd>
+          </div>
+        ))}
+        <div class="trait">
+          <dt>Adoption fee</dt>
+          <dd>{formatFee(animal.adoptionFee)}</dd>
+        </div>
+      </dl>
+
+      <div class="flags">
+        <section aria-labelledby="liveswith-heading">
+          <h2 id="liveswith-heading" class="flags-heading">Can live with</h2>
+          <ul class="flag-list">
+            {livesWith.map((f) => (
+              <li class={f.ok ? 'yes' : 'no'}>
+                <span aria-hidden="true">{f.ok ? '✓' : '✕'}</span>
+                {f.label}
+                <span class="visually-hidden">{f.ok ? ' — yes' : ' — no'}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        <section aria-labelledby="care-heading">
+          <h2 id="care-heading" class="flags-heading">Already done</h2>
+          <ul class="flag-list">
+            {care.map((f) => (
+              <li class={f.ok ? 'yes' : 'no'}>
+                <span aria-hidden="true">{f.ok ? '✓' : '✕'}</span>
+                {f.label}
+                <span class="visually-hidden">{f.ok ? ' — yes' : ' — not yet'}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      </div>
+
+      {body && (
+        <section class="animal-story" aria-labelledby="story-heading">
+          <h2 id="story-heading">{animal.name}'s story</h2>
+          <div class="prose" set:html={body} />
+        </section>
+      )}
+
+      {canApply && (
+        <div class="apply-cta">
+          <a class="btn btn--primary" href={`/apply?animal=${encodeURIComponent(animal.slug)}`}>
+            Apply to adopt {animal.name}
+          </a>
+          <p class="muted apply-note">
+            The form takes about ten minutes. We reply within {SITE.applicationResponseDays}.
+          </p>
+        </div>
+      )}
+
+      <p class="back-link"><a href="/adopt">← Back to all animals</a></p>
+    </div>
+  </article>
+</Layout>
+
+<style>
+  .crumbs { padding-block: 1.25rem .5rem; }
+  .crumbs ol { list-style: none; display: flex; flex-wrap: wrap; gap: .4rem; margin: 0; padding: 0; font-size: var(--step--1); }
+  .crumbs li + li::before { content: '/'; margin-right: .4rem; color: var(--ink-soft); }
+  .crumbs a { color: var(--ink-soft); text-decoration: none; }
+  .crumbs a:hover { color: var(--teal); text-decoration: underline; }
+  .crumbs [aria-current] { color: var(--ink); font-weight: 600; }
+
+  .animal {
+    display: grid; gap: clamp(1.5rem, 1rem + 3vw, 3rem);
+    align-items: start; padding-block: 1rem 3.5rem;
+  }
+  @media (min-width: 940px) { .animal { grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); } }
+  @media (min-width: 940px) { .animal-media { position: sticky; top: 92px; } }
+
+  .animal-hero, .animal-media :global(.ph) {
+    width: 100%; aspect-ratio: 4 / 3; object-fit: cover;
+    border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); background: var(--cream-deep);
+  }
+  .thumbs { list-style: none; display: flex; gap: .6rem; margin: .75rem 0 0; padding: 0; flex-wrap: wrap; }
+  .thumbs button {
+    padding: 0; border: 2px solid transparent; border-radius: var(--radius);
+    background: none; cursor: pointer; overflow: hidden; line-height: 0;
+  }
+  .thumbs button[aria-pressed='true'] { border-color: var(--teal); }
+  .thumbs img { width: 78px; height: 60px; object-fit: cover; }
+
+  .animal-title { display: flex; align-items: center; gap: .85rem; flex-wrap: wrap; }
+  .animal-title h1 { margin: 0; }
+  .animal-sub { font-size: var(--step-1); color: var(--ink-soft); margin-top: .6rem; }
+  .animal-notice { display: block; margin-bottom: 1.25rem; }
+  .animal-notice a { color: inherit; }
+
+  .special {
+    background: var(--terracotta-tint); border-left: 4px solid var(--terracotta);
+    border-radius: var(--radius); padding: 1rem 1.15rem; margin-bottom: 1.5rem;
+  }
+  .special h2 { font-size: var(--step-0); margin: 0 0 .35rem; color: var(--terracotta-dark); }
+  .special p { margin: 0; font-size: var(--step--1); }
+
+  .traits {
+    display: grid; gap: .85rem 1.25rem; margin: 0 0 1.75rem;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 140px), 1fr));
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); padding: 1.25rem;
+  }
+  .trait dt { font-size: var(--step--1); color: var(--ink-soft); }
+  .trait dd { margin: .15rem 0 0; font-family: var(--font-head); font-weight: 600; }
+
+  .flags { display: grid; gap: 1.25rem; margin-bottom: 1.75rem; }
+  @media (min-width: 520px) { .flags { grid-template-columns: 1fr 1fr; } }
+  .flags-heading { font-size: var(--step-0); margin: 0 0 .5rem; }
+  .flag-list { list-style: none; margin: 0; padding: 0; display: grid; gap: .35rem; font-size: var(--step--1); }
+  .flag-list li { display: flex; align-items: center; gap: .5rem; }
+  .flag-list .yes { color: var(--ok); font-weight: 600; }
+  .flag-list .no { color: var(--ink-soft); }
+
+  .animal-story h2 { font-size: var(--step-2); }
+  .apply-cta {
+    margin-top: 2rem; padding: 1.5rem; background: var(--teal-tint);
+    border-radius: var(--radius-lg); text-align: center;
+  }
+  .apply-note { margin: .75rem 0 0; font-size: var(--step--1); }
+  .back-link { margin-top: 2rem; font-size: var(--step--1); }
+</style>
+
+<script>
+  // Swap the hero when a thumbnail is chosen. Without JS the first photograph
+  // still shows and every thumbnail is visible, so nothing is lost.
+  const gallery = document.querySelector('[data-gallery]');
+  const hero = document.getElementById('animal-hero-image') as HTMLImageElement | null;
+
+  if (gallery && hero) {
+    gallery.addEventListener('click', (event) => {
+      const button = (event.target as HTMLElement).closest('button');
+      if (!button) return;
+      const src = button.getAttribute('data-src');
+      if (!src) return;
+      hero.src = src;
+      gallery.querySelectorAll('button').forEach((b) => {
+        b.setAttribute('aria-pressed', String(b === button));
+      });
+    });
+  }
+</script>

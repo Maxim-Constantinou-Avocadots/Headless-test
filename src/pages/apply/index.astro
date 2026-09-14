@@ -1,0 +1,55 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import ApplicationForm from '../../components/ApplicationForm.tsx';
+import type { AnimalOption } from '../../components/ApplicationForm.tsx';
+import { getAllAnimals, applicableAnimals } from '../../lib/animals';
+import { SITE } from '../../lib/site';
+
+const preselectedSlug = Astro.url.searchParams.get('animal') ?? '';
+
+let options: AnimalOption[] = [];
+try {
+  const { animals } = await getAllAnimals();
+  options = applicableAnimals(animals).map((a) => ({
+    id: a._id, slug: a.slug, name: a.name, breed: a.breed, status: a.status,
+  }));
+} catch (err) {
+  console.error('[apply] could not load animals', err);
+}
+---
+
+<Layout>
+  <section class="page-head">
+    <div class="wrap">
+      <p class="kicker">Adoption application</p>
+      <h1>Apply to adopt</h1>
+      <p class="lede">
+        This takes about ten minutes. There are no trick questions — we are
+        trying to picture the animal in your home, not catch you out. Answer
+        honestly and we will do the rest.
+      </p>
+    </div>
+  </section>
+
+  <div class="wrap apply-wrap">
+    <noscript>
+      <p class="alert alert--warn">
+        This form needs JavaScript to work. If you would rather not enable it,
+        ring us on <a href={`tel:${SITE.phoneHref}`}>{SITE.phone}</a> and we
+        will take your application over the phone — that is completely fine.
+      </p>
+    </noscript>
+
+    <ApplicationForm
+      client:load
+      animals={options}
+      preselectedSlug={preselectedSlug}
+      responseDays={SITE.applicationResponseDays}
+    />
+  </div>
+</Layout>
+
+<style>
+  .page-head { padding-block: clamp(2rem, 1.5rem + 2.5vw, 3.5rem) 1.5rem; }
+  .apply-wrap { padding-bottom: 4rem; max-width: 760px; }
+</style>
